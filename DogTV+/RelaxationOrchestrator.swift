@@ -23,7 +23,7 @@ class RelaxationOrchestrator {
     
     // MARK: - Core Components
     private let behaviorAnalyzer = CanineBehaviorAnalyzer()
-    private let visualRenderer = VisualRenderer()
+    private let visualRenderer: VisualRenderer
     private let audioEngine = CanineAudioEngine()
     private let performanceOptimizer = PerformanceOptimizer()
     
@@ -108,7 +108,8 @@ class RelaxationOrchestrator {
      * Initialize the relaxation orchestrator
      * Sets up all components and starts real-time processing
      */
-    init() {
+    init(visualRenderer: VisualRenderer) {
+        self.visualRenderer = visualRenderer
         setupContentLibrary()
         initializeBehaviorTracking()
         startRealTimeProcessing()
@@ -993,6 +994,21 @@ class RelaxationOrchestrator {
         }
         
         return predictions
+    }
+
+    // MARK: - API Methods (from older VisualRenderer, to be removed if not needed, or adapted)
+    // These methods were found in the grep output but may not be relevant to RelaxationOrchestrator directly calling them.
+    // We should remove them if they are not used or adapt their calls.
+    func fadeOut(duration: TimeInterval) {
+        // This method was present in the old VisualRenderer and seemed to be called by RelaxationOrchestrator.
+        // If the new VisualRenderer has an equivalent, call it here. Otherwise, reassess the need.
+        print("RelaxationOrchestrator fadeOut called (needs adaptation)")
+    }
+
+    func fadeIn(duration: TimeInterval) {
+        // This method was present in the old VisualRenderer and seemed to be called by RelaxationOrchestrator.
+        // If the new VisualRenderer has an equivalent, call it here. Otherwise, reassess the need.
+        print("RelaxationOrchestrator fadeIn called (needs adaptation)")
     }
 }
 

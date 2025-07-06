@@ -7,7 +7,7 @@ import SwiftUI
 @main
 struct DogTV_App: App {
     // Core components for the DogTV+ app
-    private let visualRenderer = DogVisionRenderer()
+    private let visualRenderer: VisualRenderer
     private let audioEngine = CanineAudioEngine()
     private let behaviorAnalyzer = CanineBehaviorAnalyzer()
     private let relaxationOrchestrator: RelaxationOrchestrator
@@ -15,10 +15,18 @@ struct DogTV_App: App {
     
     /// Initializes the DogTV+ app, setting up core components with default profiles.
     init() {
+        // Initialize visualRenderer safely
+        do {
+            self.visualRenderer = try VisualRenderer()
+        } catch {
+            fatalError("Failed to initialize VisualRenderer: \(error)")
+        }
+
         // Initialize relaxation orchestrator with default age and breed profiles
         let defaultAgeProfile = AgeProfile.adult
         let defaultBreedProfile = BreedProfile(name: "Generic", energyLevel: .medium, size: .medium)
-        self.relaxationOrchestrator = RelaxationOrchestrator(ageProfile: defaultAgeProfile, breedProfile: defaultBreedProfile)
+        self.relaxationOrchestrator = RelaxationOrchestrator(ageProfile: defaultAgeProfile, breedProfile: defaultBreedProfile, visualRenderer: visualRenderer)
+        self.performanceOptimizer = PerformanceOptimizer(visualRenderer: visualRenderer)
         
         // Set performance optimizer delegate to adjust rendering parameters
         // In a real implementation, this would connect to visualRenderer and audioEngine
@@ -32,8 +40,9 @@ struct DogTV_App: App {
     /// Sets up the core components of the app, preparing them for use.
     private func setupAppComponents() {
         // Setup visual renderer for canine-optimized visuals
-        visualRenderer.setupUltimateRendering()
-        visualRenderer.setupCanineVisionPipeline()
+        // No longer calling setupUltimateRendering() or setupCanineVisionPipeline() as they are integrated into VisualRenderer's init
+        // visualRenderer.setupUltimateRendering()
+        // visualRenderer.setupCanineVisionPipeline()
         
         // Setup audio engine for therapeutic content
         audioEngine.setupTherapeuticAudio()
@@ -48,6 +57,7 @@ struct DogTV_App: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(visualRenderer)
                 .onAppear {
                     // Start rendering and audio playback based on initial parameters
                     startRelaxationSession()
@@ -72,7 +82,8 @@ struct DogTV_App: App {
         
         // For now, simulate starting content
         audioEngine.playAudio(forCategory: initialParameters.category)
-        visualRenderer.renderFrame()
+        // Removed visualRenderer.renderFrame() as it's not a top-level call anymore, rendering is handled internally
+        // visualRenderer.renderFrame()
         
         print("Started relaxation session with parameters: \(initialParameters)")
     }

@@ -5,6 +5,7 @@ import SwiftUI
 /// for tvOS, ensuring intuitive navigation, clear focus states, and accessibility support.
 /// The interface is designed for easy remote control interaction with large, clear elements.
 struct ContentView: View {
+    @EnvironmentObject var visualRenderer: VisualRenderer // Receive VisualRenderer as an environment object
     @State private var selectedTab = 0
     private let categories = ["Calm & Relax", "Mental Stimulation", "Exercise Motivation", "Separation Anxiety", "Nature Sounds", "Training Videos"]
     
