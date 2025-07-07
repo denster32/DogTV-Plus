@@ -87,7 +87,7 @@ public class ContentDeliverySystem: ObservableObject {
     /// Get recommendations based on dog breed
     public func getRecommendationsForBreed(_ breed: DogBreed) -> [VideoContent] {
         return recommendations.filter { content in
-            content.recommendedBreeds.contains(breed)
+            content.metadata.breedCompatibility.contains(breed.rawValue)
         }
     }
     
@@ -122,9 +122,9 @@ public class ContentDeliverySystem: ObservableObject {
     }
     
     private func generateRecommendations() {
-        // Generate recommendations based on popularity and user preferences
+        // Generate recommendations based on content metadata and user preferences
         recommendations = contentItems
-            .filter { $0.isPopular }
+            .filter { $0.metadata.energyLevel == .medium || $0.metadata.energyLevel == .low }
             .prefix(10)
             .map { $0 }
     }
@@ -155,69 +155,89 @@ public class ContentDeliverySystem: ObservableObject {
     private func createSampleContent() -> [VideoContent] {
         return [
             VideoContent(
-                id: "relaxation_1",
                 title: "Calming Forest Walk",
                 description: "A peaceful walk through a serene forest with gentle sounds of nature",
                 category: .relaxation,
                 duration: 1800, // 30 minutes
-                thumbnailURL: "forest_walk_thumb",
-                videoURL: "forest_walk_video",
                 tags: ["nature", "calming", "forest", "peaceful"],
-                recommendedBreeds: [.goldenRetriever, .labrador, .borderCollie],
-                isPopular: true,
-                rating: 4.8
+                metadata: ContentMetadata(
+                    breedCompatibility: ["Golden Retriever", "Labrador", "Border Collie"],
+                    ageRange: .all,
+                    energyLevel: .low,
+                    moodType: .calm,
+                    timeOfDay: .anytime,
+                    seasonality: .yearRound
+                ),
+                url: URL(string: "https://example.com/forest_walk_video")!,
+                thumbnailURL: URL(string: "https://example.com/forest_walk_thumb")
             ),
             VideoContent(
-                id: "stimulation_1",
                 title: "Playful Squirrels",
                 description: "Exciting footage of playful squirrels in the park",
                 category: .stimulation,
                 duration: 900, // 15 minutes
-                thumbnailURL: "squirrels_thumb",
-                videoURL: "squirrels_video",
                 tags: ["squirrels", "playful", "park", "exciting"],
-                recommendedBreeds: [.jackRussell, .beagle, .australianShepherd],
-                isPopular: true,
-                rating: 4.6
+                metadata: ContentMetadata(
+                    breedCompatibility: ["Jack Russell", "Beagle", "Australian Shepherd"],
+                    ageRange: .young,
+                    energyLevel: .high,
+                    moodType: .excited,
+                    timeOfDay: .afternoon,
+                    seasonality: .yearRound
+                ),
+                url: URL(string: "https://example.com/squirrels_video")!,
+                thumbnailURL: URL(string: "https://example.com/squirrels_thumb")
             ),
             VideoContent(
-                id: "training_1",
                 title: "Basic Obedience Training",
                 description: "Step-by-step guide to basic obedience commands",
                 category: .training,
                 duration: 1200, // 20 minutes
-                thumbnailURL: "training_thumb",
-                videoURL: "training_video",
                 tags: ["training", "obedience", "commands", "education"],
-                recommendedBreeds: [.germanShepherd, .borderCollie, .goldenRetriever],
-                isPopular: false,
-                rating: 4.9
+                metadata: ContentMetadata(
+                    breedCompatibility: ["German Shepherd", "Border Collie", "Golden Retriever"],
+                    ageRange: .puppy,
+                    energyLevel: .medium,
+                    moodType: .neutral,
+                    timeOfDay: .morning,
+                    seasonality: .yearRound
+                ),
+                url: URL(string: "https://example.com/training_video")!,
+                thumbnailURL: URL(string: "https://example.com/training_thumb")
             ),
             VideoContent(
-                id: "relaxation_2",
                 title: "Ocean Waves",
                 description: "Soothing ocean waves with calming blue visuals",
                 category: .relaxation,
                 duration: 2400, // 40 minutes
-                thumbnailURL: "ocean_thumb",
-                videoURL: "ocean_video",
                 tags: ["ocean", "waves", "blue", "soothing"],
-                recommendedBreeds: [.greatDane, .berneseMountainDog, .newfoundland],
-                isPopular: true,
-                rating: 4.7
+                metadata: ContentMetadata(
+                    breedCompatibility: ["Great Dane", "Bernese Mountain Dog", "Newfoundland"],
+                    ageRange: .senior,
+                    energyLevel: .low,
+                    moodType: .calm,
+                    timeOfDay: .evening,
+                    seasonality: .yearRound
+                ),
+                url: URL(string: "https://example.com/ocean_video")!,
+                thumbnailURL: URL(string: "https://example.com/ocean_thumb")
             ),
             VideoContent(
-                id: "stimulation_2",
                 title: "Bird Watching",
                 description: "Colorful birds in their natural habitat",
                 category: .stimulation,
                 duration: 600, // 10 minutes
-                thumbnailURL: "birds_thumb",
-                videoURL: "birds_video",
                 tags: ["birds", "colorful", "nature", "watching"],
-                recommendedBreeds: [.cat, .terrier, .spaniel],
-                isPopular: false,
-                rating: 4.4
+                metadata: ContentMetadata(
+                    breedCompatibility: ["Cat", "Terrier", "Spaniel"],
+                    ageRange: .adult,
+                    energyLevel: .medium,
+                    moodType: .playful,
+                    timeOfDay: .afternoon,
+                    seasonality: .spring
+                ),
+                url: URL(string: "https://example.com/birds_video")!,
+                thumbnailURL: URL(string: "https://example.com/birds_thumb")
             )
         ]
     }
@@ -225,33 +245,7 @@ public class ContentDeliverySystem: ObservableObject {
 
 // MARK: - Data Models
 
-public struct VideoContent: Identifiable, Codable, Equatable {
-    public let id: String
-    public let title: String
-    public let description: String
-    public let category: ContentCategory
-    public let duration: Double // in seconds
-    public let thumbnailURL: String
-    public let videoURL: String
-    public let tags: [String]
-    public let recommendedBreeds: [DogBreed]
-    public let isPopular: Bool
-    public let rating: Double
-    
-    public init(id: String, title: String, description: String, category: ContentCategory, duration: Double, thumbnailURL: String, videoURL: String, tags: [String], recommendedBreeds: [DogBreed], isPopular: Bool, rating: Double) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.category = category
-        self.duration = duration
-        self.thumbnailURL = thumbnailURL
-        self.videoURL = videoURL
-        self.tags = tags
-        self.recommendedBreeds = recommendedBreeds
-        self.isPopular = isPopular
-        self.rating = rating
-    }
-}
+// Using VideoContent from ContentRecommendationSystem for consistency
 
 public enum ContentCategory: String, CaseIterable, Codable {
     case relaxation = "Relaxation"

@@ -13,7 +13,7 @@ public struct DogTVMainApp: App {
     
     // MARK: - System Managers
     
-    @StateObject private var coreSystem = DogTVCoreSystem()
+    @StateObject private var coreSystem = DogTVCore.AppCoordinator()
     @StateObject private var audioEngine = CanineAudioEngine()
     @StateObject private var visualRenderer = VisualRenderer()
     @StateObject private var behaviorAnalyzer = CanineBehaviorAnalyzer()

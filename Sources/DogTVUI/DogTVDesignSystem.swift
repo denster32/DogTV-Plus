@@ -2,7 +2,7 @@ import SwiftUI
 import DogTVCore
 
 /// Comprehensive design system for DogTV+ reflecting the app's personality
-public struct DogTVDesignSystem {
+public class DogTVDesignSystem: ObservableObject {
     
     // MARK: - Color Palette
     
