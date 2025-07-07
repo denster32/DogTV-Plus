@@ -1,0 +1,54 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Swift
+        uses: fwal/setup-swift@v1
+        with:
+          swift-version: '5.9'
+
+      - name: Resolve Swift packages
+        run: swift package resolve
+
+      - name: Build Release
+        run: xcodebuild -workspace DogTV+.xcodeproj -scheme DogTV+ -sdk appletvos -configuration Release clean build CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | xcpretty
+
+      - name: Run Tests
+        run: xcodebuild test -workspace DogTV+.xcodeproj -scheme DogTV+ -sdk appletvos -destination 'platform=tvOS Simulator,name=Apple TV 4K,OS=latest' | xcpretty
+
+      - name: SwiftLint
+        uses: norio-nomura/action-swiftlint@3.2.1
+
+      - name: Generate Documentation
+        run: xcodebuild docbuild -scheme DogTV+ -destination 'platform=tvOS Simulator,name=Apple TV 4K,OS=latest' | xcpretty
+
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs
+          path: build/DocC-archive
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Beta Deployment
+        run: fastlane beta 

@@ -103,6 +103,15 @@ This project is licensed under the Apache-2.0 License - see the [LICENSE](LICENS
 - **v1.0.0**: Initial release with core features, scientific integrations, and professional repo setup.
 - **Upcoming**: Add CI/CD automation and further optimizations.
 
+## Project Management & Operations
+
+- [CI/CD Pipeline](CI_CD.md)
+- [App Store Preparation](AppStorePreparation.md)
+- [Marketing & Launch Strategy](MarketingLaunchStrategy.md)
+- [Resource Allocation & Tooling](ResourceAllocation.md)
+- [Success Metrics & KPIs](DogTV+/SuccessMetricsView.swift)
+- [Final Release Checklist](FinalReleaseChecklist.md)
+
 ---
 
 This README follows GitHub's markdown standards for a clean, professional look. If you'd like to add badges or custom images, let me know!
