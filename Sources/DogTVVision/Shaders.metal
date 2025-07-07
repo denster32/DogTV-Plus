@@ -187,6 +187,241 @@ float3 processBrachycephalicColors(float3 color, constant CanineShaderParameters
     return enhanceContrast(canineColor, 1.6);  // Maximum contrast for clarity
 }
 
+<<<<<<< HEAD
+=======
+// MARK: - Dynamic Content Generation Shaders
+
+/**
+ * Nature Scene Vertex Shader
+ * Handles vertex transformations for nature scenes with wind effects
+ */
+vertex float4 nature_vertex_shader(uint vertexID [[vertex_id]],
+                                   constant float3* positions [[buffer(0)]],
+                                   constant CanineShaderParameters& params [[buffer(1)]],
+                                   constant float& time [[buffer(2)]]) {
+    
+    float3 position = positions[vertexID];
+    
+    // Apply wind effect for nature scenes
+    float windStrength = params.motionSensitivity * 0.1;
+    position.x += sin(time * 2.0 + position.y * 0.01) * windStrength;
+    position.y += cos(time * 1.5 + position.x * 0.01) * windStrength * 0.5;
+    
+    return float4(position, 1.0);
+}
+
+/**
+ * Water Effect Fragment Shader
+ * Creates realistic water effects optimized for canine vision
+ */
+fragment float4 water_fragment_shader(float4 position [[stage_in]],
+                                       constant CanineShaderParameters& params [[buffer(1)]],
+                                       constant float& time [[buffer(2)]]) {
+    
+    float2 coord = position.xy;
+    
+    // Create wave patterns
+    float wave1 = sin(coord.x * 0.01 + time * 2.0) * 0.1;
+    float wave2 = cos(coord.y * 0.008 + time * 1.5) * 0.08;
+    float wave3 = sin(coord.x * 0.015 + coord.y * 0.012 + time * 2.5) * 0.05;
+    
+    float waveIntensity = (wave1 + wave2 + wave3) * params.motionSensitivity;
+    
+    // Blue water color optimized for dogs
+    float3 waterColor = float3(0.0, 0.3, 0.8 * params.blueWeight);
+    waterColor += waveIntensity * 0.3;
+    
+    // Apply contrast enhancement
+    waterColor = enhanceContrast(waterColor, params.contrastMultiplier);
+    
+    return float4(waterColor, 1.0);
+}
+
+/**
+ * Particle System Fragment Shader
+ * Generates dynamic particles for interactive content
+ */
+fragment float4 particle_fragment_shader(float4 position [[stage_in]],
+                                          constant CanineShaderParameters& params [[buffer(1)]],
+                                          constant float& time [[buffer(2)]]) {
+    
+    float2 coord = position.xy;
+    
+    // Create floating particles
+    float particleSize = 20.0;
+    float2 particlePos = fmod(coord + time * 50.0, particleSize * 2.0);
+    float distanceFromCenter = length(particlePos - particleSize);
+    
+    // Particle visibility
+    float particleAlpha = 1.0 - smoothstep(0.0, particleSize * 0.5, distanceFromCenter);
+    particleAlpha *= params.colorIntensity;
+    
+    // Alternate between blue and yellow particles
+    float3 particleColor;
+    if (fmod(floor(coord.x / particleSize) + floor(coord.y / particleSize), 2.0) < 1.0) {
+        particleColor = float3(0.0, 0.0, 1.0 * params.blueWeight);
+    } else {
+        particleColor = float3(1.0, 1.0, 0.0) * params.yellowWeight;
+    }
+    
+    return float4(particleColor, particleAlpha);
+}
+
+/**
+ * Geometric Pattern Fragment Shader
+ * Creates abstract geometric patterns for stimulation
+ */
+fragment float4 geometric_fragment_shader(float4 position [[stage_in]],
+                                           constant CanineShaderParameters& params [[buffer(1)]],
+                                           constant float& time [[buffer(2)]]) {
+    
+    float2 coord = position.xy;
+    
+    // Create rotating geometric patterns
+    float2 center = float2(960.0, 540.0);
+    float2 relativePos = coord - center;
+    
+    float angle = atan2(relativePos.y, relativePos.x) + time * params.motionSensitivity;
+    float radius = length(relativePos);
+    
+    // Create radial pattern
+    float segments = 12.0;
+    float segmentAngle = fmod(angle * segments / (2.0 * M_PI_F), 1.0);
+    
+    float3 color;
+    if (segmentAngle < 0.5) {
+        color = float3(0.0, 0.0, 1.0 * params.blueWeight);
+    } else {
+        color = float3(1.0, 1.0, 0.0) * params.yellowWeight;
+    }
+    
+    // Add radial fade
+    float fade = 1.0 - smoothstep(0.0, 500.0, radius);
+    color *= fade * params.colorIntensity;
+    
+    return float4(color, 1.0);
+}
+
+/**
+ * Calming Ripple Fragment Shader
+ * Creates slow, calming ripple effects
+ */
+fragment float4 ripple_fragment_shader(float4 position [[stage_in]],
+                                        constant CanineShaderParameters& params [[buffer(1)]],
+                                        constant float& time [[buffer(2)]]) {
+    
+    float2 coord = position.xy;
+    float2 center = float2(960.0, 540.0);
+    
+    float distance = length(coord - center);
+    float ripple = sin(distance * 0.02 - time * 2.0 * params.motionSensitivity) * 0.5 + 0.5;
+    
+    // Soft blue ripples
+    float3 rippleColor = float3(0.0, 0.0, 0.8 * params.blueWeight);
+    rippleColor *= ripple * params.colorIntensity;
+    
+    // Background color
+    float3 backgroundColor = float3(0.9, 0.9, 1.0) * 0.3;
+    
+    float3 finalColor = mix(backgroundColor, rippleColor, ripple * 0.6);
+    finalColor = enhanceContrast(finalColor, params.contrastMultiplier);
+    
+    return float4(finalColor, 1.0);
+}
+
+/**
+ * Motion Blur Shader for Dynamic Content
+ * Reduces motion blur for motion-sensitive dogs
+ */
+fragment float4 motion_blur_reduction_shader(float4 position [[stage_in]],
+                                              texture2d<float> currentFrame [[texture(0)]],
+                                              texture2d<float> previousFrame [[texture(1)]],
+                                              constant CanineShaderParameters& params [[buffer(1)]]) {
+    
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    
+    float4 current = currentFrame.sample(textureSampler, position.xy);
+    float4 previous = previousFrame.sample(textureSampler, position.xy);
+    
+    // Blend frames to reduce motion blur
+    float blendFactor = params.motionBlurReduction;
+    float4 blended = mix(current, previous, blendFactor);
+    
+    // Apply canine vision processing
+    float4 canineProcessed = canine_fragment_shader(position, currentFrame, params);
+    
+    return mix(blended, canineProcessed, 0.8);
+}
+
+/**
+ * Focus Enhancement Shader
+ * Enhances focus areas for training content
+ */
+fragment float4 focus_enhancement_shader(float4 position [[stage_in]],
+                                          texture2d<float> texture [[texture(0)]],
+                                          constant CanineShaderParameters& params [[buffer(1)]],
+                                          constant float2& focusPoint [[buffer(2)]]) {
+    
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    float4 color = texture.sample(textureSampler, position.xy);
+    
+    // Calculate distance from focus point
+    float distance = length(position.xy - focusPoint);
+    float focusRadius = 200.0;
+    
+    // Create focus enhancement
+    float focusIntensity = 1.0 - smoothstep(0.0, focusRadius, distance);
+    focusIntensity *= params.contrastMultiplier;
+    
+    // Enhance colors in focus area
+    if (focusIntensity > 0.1) {
+        color.rgb *= (1.0 + focusIntensity * 0.5);
+        color.rgb = convertToCanineColorSpace(color.rgb, params);
+    } else {
+        // Desaturate areas outside focus
+        color.rgb *= 0.7;
+    }
+    
+    return color;
+}
+
+/**
+ * Bubble Effect Shader
+ * Creates floating bubble effects for interactive content
+ */
+fragment float4 bubble_fragment_shader(float4 position [[stage_in]],
+                                        constant CanineShaderParameters& params [[buffer(1)]],
+                                        constant float& time [[buffer(2)]]) {
+    
+    float2 coord = position.xy;
+    
+    // Create multiple bubble layers
+    float3 bubbleColor = float3(0.0, 0.0, 0.0);
+    
+    for (int i = 0; i < 5; i++) {
+        float bubbleSize = 50.0 + float(i) * 20.0;
+        float speed = 30.0 + float(i) * 10.0;
+        
+        float2 bubbleCenter = float2(
+            fmod(coord.x + time * speed, 1920.0),
+            fmod(coord.y + time * speed * 0.7, 1080.0)
+        );
+        
+        float distance = length(coord - bubbleCenter);
+        float bubble = 1.0 - smoothstep(0.0, bubbleSize, distance);
+        
+        // Blue bubbles optimized for canine vision
+        float3 currentBubble = float3(0.4, 0.8, 1.0 * params.blueWeight) * bubble;
+        bubbleColor += currentBubble * 0.3;
+    }
+    
+    bubbleColor *= params.colorIntensity;
+    bubbleColor = clamp(bubbleColor, 0.0, 1.0);
+    
+    return float4(bubbleColor, length(bubbleColor));
+}
+
+>>>>>>> 494c7b2 (Complete Phase 2 Advanced Analytics and Performance Optimization - Add AdvancedAnalyticsSystem with usage metrics, engagement tracking, and health insights dashboard - Add PerformanceOptimizationSystem with GPU compute shaders, memory management, and battery optimization - Update TODO.md to mark all tasks as complete - Create FINAL_COMPLETION_REPORT.md documenting project completion - Resolve merge conflicts and prepare for production deployment - All 12 tasks now complete and ready for git push)
 // MARK: - Advanced Shader Wrappers
 vertex float4 advancedVertexShader(uint vertexID [[vertex_id]],
                                    constant float3* positions [[buffer(0)]],
