@@ -174,7 +174,7 @@ public class ProductionMonitoringSystem: ObservableObject {
         var totalSessions: Int = 0
         var totalUsers: Int = 0
         var contentViews: Int = 0
-        var videoPlaybacks: Int = 0
+        var proceduralSessions: Int = 0
         var behaviorAnalysis: Int = 0
         var featureAdoption: [String: Float] = [:]
         var userJourney: [String: Int] = [:]

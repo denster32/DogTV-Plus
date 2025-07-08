@@ -16,7 +16,6 @@ let package = Package(
         .library(name: "DogTVData", targets: ["DogTVData"]),
         .library(name: "DogTVSecurity", targets: ["DogTVSecurity"]),
         .library(name: "DogTVAnalytics", targets: ["DogTVAnalytics"]),
-        .library(name: "DogTVResources", targets: ["DogTVResources"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
@@ -47,7 +46,9 @@ let package = Package(
         .target(
             name: "DogTVVision",
             dependencies: ["DogTVCore"],
-            path: "Sources/DogTVVision"
+            path: "Sources/DogTVVision",
+            exclude: ["Shaders.metal"],
+            resources: [.process("CanineOptimizedShaders.metal")]
         ),
         
         // Behavior analysis
@@ -78,13 +79,6 @@ let package = Package(
             path: "Sources/DogTVAnalytics"
         ),
         
-        // Resources
-        .target(
-            name: "DogTVResources",
-            dependencies: [],
-            path: "Sources/Resources"
-        ),
-        
         // Tests
         .testTarget(
             name: "DogTVCoreTests",
@@ -97,19 +91,9 @@ let package = Package(
             path: "Tests/DogTVUITests"
         ),
         .testTarget(
-            name: "DogTVAudioTests",
-            dependencies: ["DogTVAudio"],
-            path: "Tests/DogTVAudioTests"
-        ),
-        .testTarget(
             name: "DogTVVisionTests",
             dependencies: ["DogTVVision"],
             path: "Tests/DogTVVisionTests"
-        ),
-        .testTarget(
-            name: "DogTVBehaviorTests",
-            dependencies: ["DogTVBehavior"],
-            path: "Tests/DogTVBehaviorTests"
         ),
         .testTarget(
             name: "DogTVDataTests",
@@ -120,11 +104,6 @@ let package = Package(
             name: "DogTVSecurityTests",
             dependencies: ["DogTVSecurity"],
             path: "Tests/DogTVSecurityTests"
-        ),
-        .testTarget(
-            name: "DogTVAnalyticsTests",
-            dependencies: ["DogTVAnalytics"],
-            path: "Tests/DogTVAnalyticsTests"
         )
     ]
 ) 

@@ -38,13 +38,14 @@ import Combine
  * - Cloud ML services integration
  * - Real-time model serving
  */
+@available(macOS 10.15, *)
 public class MachineLearningSystem: ObservableObject {
     
     // MARK: - Published Properties
     @Published public var mlModels: MLModels = MLModels()
     @Published public var predictions: Predictions = Predictions()
     @Published public var analytics: MLAnalytics = MLAnalytics()
-    @Published public var trainingStatus: TrainingStatus = TrainingStatus()
+    @Published public var trainingStatus: TrainingStatus = .notStarted
     @Published public var modelPerformance: ModelPerformance = ModelPerformance()
     
     // MARK: - System Components
@@ -58,7 +59,7 @@ public class MachineLearningSystem: ObservableObject {
     private let nlpProcessor = NLPProcessor()
     
     // MARK: - Configuration
-    private var mlConfig: MLConfiguration
+    private var mlConfig: MachineLearningConfiguration
     private var trainingConfig: TrainingConfiguration
     private var inferenceConfig: InferenceConfiguration
     
@@ -478,13 +479,7 @@ public class MachineLearningSystem: ObservableObject {
         case declining = "Declining"
     }
     
-    public struct TrainingStatus: Codable {
-        var activeTrainings: [TrainingModel] = []
-        var completedTrainings: [TrainingModel] = []
-        var failedTrainings: [TrainingModel] = []
-        var trainingQueue: [TrainingModel] = []
-        var lastUpdated: Date = Date()
-    }
+
     
     public struct ModelPerformance: Codable {
         var overallAccuracy: Float = 0.0
@@ -540,7 +535,7 @@ public class MachineLearningSystem: ObservableObject {
     // MARK: - Initialization
     
     public init() {
-        self.mlConfig = MLConfiguration()
+        self.mlConfig = MachineLearningConfiguration()
         self.trainingConfig = TrainingConfiguration()
         self.inferenceConfig = InferenceConfiguration()
         
@@ -551,6 +546,7 @@ public class MachineLearningSystem: ObservableObject {
     // MARK: - Public Methods
     
     /// Deploy ML model
+    @available(macOS 10.15, *)
     public func deployModel(_ model: TrainingModel) async throws -> DeployedModel {
         let deployedModel = try await modelManager.deployModel(model)
         
@@ -563,6 +559,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Make prediction
+    @available(macOS 10.15, *)
     public func makePrediction(_ input: MLInput, modelId: UUID) async throws -> MLPrediction {
         let prediction = try await predictionEngine.makePrediction(input: input, modelId: modelId)
         
@@ -575,6 +572,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Start model training
+    @available(macOS 10.15, *)
     public func startTraining(_ config: TrainingConfig) async throws -> TrainingModel {
         let training = try await trainingManager.startTraining(config: config)
         
@@ -587,6 +585,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Get model performance
+    @available(macOS 10.15, *)
     public func getModelPerformance(_ modelId: UUID) async -> ModelPerformanceMetrics {
         let performance = await analyticsEngine.getModelPerformance(modelId)
         
@@ -596,6 +595,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Analyze sentiment
+    @available(macOS 10.15, *)
     public func analyzeSentiment(_ text: String) async -> SentimentResult {
         let sentiment = await nlpProcessor.analyzeSentiment(text)
         
@@ -608,6 +608,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Detect anomalies
+    @available(macOS 10.15, *)
     public func detectAnomalies(_ data: [Float]) async -> [AnomalyDetection] {
         let anomalies = await anomalyDetector.detectAnomalies(data)
         
@@ -620,6 +621,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Get content recommendations
+    @available(macOS 10.15, *)
     public func getContentRecommendations(_ userId: String) async -> [ContentRecommendation] {
         let recommendations = await predictionEngine.getContentRecommendations(userId)
         
@@ -629,6 +631,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Predict user behavior
+    @available(macOS 10.15, *)
     public func predictUserBehavior(_ userId: String) async -> [BehaviorPrediction] {
         let predictions = await predictionEngine.predictUserBehavior(userId)
         
@@ -638,6 +641,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Optimize model
+    @available(macOS 10.15, *)
     public func optimizeModel(_ modelId: UUID) async throws -> DeployedModel {
         let optimizedModel = try await modelOptimizer.optimizeModel(modelId)
         
@@ -650,7 +654,8 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Engineer features
-    public func engineerFeatures(_ data: [String: Any]) async -> [Feature] {
+    @available(macOS 10.15, *)
+    public func engineerFeatures(_ data: [String: Any]) async -> [MachineLearningSystem.Feature] {
         let features = await featureEngineer.engineerFeatures(data)
         
         print("Features engineered: \(features.count)")
@@ -659,6 +664,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Monitor data drift
+    @available(macOS 10.15, *)
     public func monitorDataDrift(_ modelId: UUID) async -> [DataDrift] {
         let drift = await analyticsEngine.monitorDataDrift(modelId)
         
@@ -671,6 +677,7 @@ public class MachineLearningSystem: ObservableObject {
     }
     
     /// Retrain model
+    @available(macOS 10.15, *)
     public func retrainModel(_ modelId: UUID) async throws -> TrainingModel {
         let training = try await trainingManager.retrainModel(modelId)
         
@@ -795,7 +802,7 @@ public class MachineLearningSystem: ObservableObject {
 // MARK: - Supporting Classes
 
 class ModelManager {
-    func configure(_ config: MLConfiguration) {
+    func configure(_ config: MachineLearningConfiguration) {
         // Configure model manager
     }
     
@@ -856,7 +863,7 @@ class PredictionEngine {
         return MLPrediction(
             modelId: modelId,
             input: input,
-            output: MLOutput(value: "prediction_result"),
+            output: MLOutput(value: "prediction_result", confidence: 1.0, metadata: [:]),
             confidence: 0.85,
             timestamp: Date()
         )
@@ -898,6 +905,7 @@ class PredictionEngine {
     }
 }
 
+@available(macOS 10.15, *)
 class TrainingManager {
     func configure(_ config: TrainingConfiguration) {
         // Configure training manager
@@ -907,15 +915,16 @@ class TrainingManager {
         // Initialize training manager
     }
     
+    @available(macOS 10.15, *)
     func startTraining(_ config: TrainingConfig) async throws -> TrainingModel {
         // Simulate starting training
         return TrainingModel(
             name: config.name,
             type: config.type,
-            status: .training,
+            status: .preparing,
             progress: 0.0,
             startTime: Date(),
-            estimatedCompletion: Date().addingTimeInterval(3600),
+            estimatedCompletion: nil,
             hyperparameters: config.hyperparameters,
             dataset: config.dataset,
             validationMetrics: nil
@@ -967,12 +976,12 @@ class TrainingManager {
     
     func getTrainingStatus() async -> TrainingStatus {
         // Simulate getting training status
-        return TrainingStatus()
+        return .notStarted
     }
 }
 
 class AnalyticsEngine {
-    func configure(_ config: MLConfiguration) {
+    func configure(_ config: MachineLearningConfiguration) {
         // Configure analytics engine
     }
     
@@ -1016,26 +1025,27 @@ class AnalyticsEngine {
 }
 
 class FeatureEngineer {
-    func configure(_ config: MLConfiguration) {
+    func configure(_ config: MachineLearningConfiguration) {
         // Configure feature engineer
     }
     
-    func engineerFeatures(_ data: [String: Any]) async -> [Feature] {
+    @available(macOS 10.15, *)
+    func engineerFeatures(_ data: [String: Any]) async -> [MachineLearningSystem.Feature] {
         // Simulate engineering features
         return [
-            Feature(
+            MachineLearningSystem.Feature(
                 name: "engineered_feature_1",
-                type: .numerical,
+                type: MachineLearningSystem.FeatureType.numerical,
                 description: "Engineered numerical feature",
                 importance: 0.8,
-                statistics: FeatureStatistics(missingValues: 0)
+                statistics: MachineLearningSystem.FeatureStatistics(missingValues: 0)
             )
         ]
     }
 }
 
 class ModelOptimizer {
-    func configure(_ config: MLConfiguration) {
+    func configure(_ config: MachineLearningConfiguration) {
         // Configure model optimizer
     }
     
@@ -1074,7 +1084,7 @@ class ModelOptimizer {
 }
 
 class AnomalyDetector {
-    func configure(_ config: MLConfiguration) {
+    func configure(_ config: MachineLearningConfiguration) {
         // Configure anomaly detector
     }
     
@@ -1095,7 +1105,7 @@ class AnomalyDetector {
 }
 
 class NLPProcessor {
-    func configure(_ config: MLConfiguration) {
+    func configure(_ config: MachineLearningConfiguration) {
         // Configure NLP processor
     }
     
@@ -1117,13 +1127,12 @@ class NLPProcessor {
 
 // MARK: - Supporting Data Structures
 
-public struct MLConfiguration {
+public struct MachineLearningConfiguration {
     var modelCacheSize: Int = 100
     var inferenceTimeout: TimeInterval = 30.0
-    var trainingTimeout: TimeInterval = 3600.0
-    var maxConcurrentTrainings: Int = 5
-    var autoRetrain: Bool = true
-    var dataDriftThreshold: Float = 0.2
+    var maxConcurrentModels: Int = 5
+    var enableAutoScaling: Bool = true
+    var performanceThreshold: Float = 0.8
 }
 
 public struct TrainingConfiguration {
@@ -1142,14 +1151,14 @@ public struct InferenceConfiguration {
 }
 
 public struct MLInput: Codable {
-    let features: [String: Any]
+    let features: [String: String]
     let metadata: [String: String]
 }
 
 public struct MLOutput: Codable {
-    let value: Any
-    let confidence: Float?
-    let metadata: [String: String]?
+    var value: String
+    var confidence: Float?
+    var metadata: [String: String]?
 }
 
 public struct MLPrediction: Codable {
@@ -1160,10 +1169,141 @@ public struct MLPrediction: Codable {
     let timestamp: Date
 }
 
+@available(macOS 10.15, *)
 public struct TrainingConfig: Codable {
     let name: String
-    let type: ModelType
-    let hyperparameters: Hyperparameters
-    let dataset: Dataset
+    let type: MachineLearningSystem.ModelType
+    let hyperparameters: MachineLearningSystem.Hyperparameters
+    let dataset: MachineLearningSystem.Dataset
     let validationStrategy: String
+}
+
+// Add missing type definitions
+struct TrainingModel: Codable, Identifiable {
+    public let id = UUID()
+    var name: String
+    var type: ModelType
+    var status: TrainingStatus
+    var progress: Float
+    var startTime: Date
+    var estimatedCompletion: Date?
+    var hyperparameters: Hyperparameters
+    var dataset: Dataset
+    var validationMetrics: ValidationMetrics?
+}
+
+struct DeployedModel: Codable {
+    let id: UUID
+    let name: String
+    let version: String
+    let deployedAt: Date
+    let status: String
+}
+
+struct MLModels: Codable {
+    let models: [TrainingModel]
+    let totalModels: Int
+    let activeModels: Int
+}
+
+struct ContentRecommendation: Codable {
+    let id: String
+    let title: String
+    let confidence: Float
+    let reason: String
+}
+
+struct BehaviorPrediction: Codable {
+    let userId: String
+    let behavior: String
+    let probability: Float
+    let timestamp: Date
+}
+
+struct Predictions: Codable {
+    let predictions: [ContentRecommendation]
+    let totalPredictions: Int
+    let accuracy: Float
+}
+
+struct ModelPerformanceMetrics: Codable {
+    let accuracy: Float
+    let precision: Float
+    let recall: Float
+    let f1Score: Float
+}
+
+struct DataDrift: Codable {
+    let feature: String
+    let driftScore: Float
+    let severity: String
+}
+
+struct MLAnalytics: Codable {
+    let metrics: [String: Float]
+    let insights: [String]
+    let recommendations: [String]
+}
+
+struct ModelPerformance: Codable {
+    let accuracy: Float
+    let latency: TimeInterval
+    let throughput: Int
+}
+
+struct AnomalyDetection: Codable {
+    let id: String
+    let severity: String
+    let description: String
+    let timestamp: Date
+}
+
+struct SentimentResult: Codable {
+    let sentiment: String
+    let confidence: Float
+    let positive: Float
+    let negative: Float
+    let neutral: Float
+}
+
+// Add missing type definitions for MachineLearningSystem
+enum ModelType: String, Codable {
+    case classification = "classification"
+    case regression = "regression"
+    case clustering = "clustering"
+    case recommendation = "recommendation"
+    case neuralNetwork = "neuralNetwork"
+}
+
+struct Hyperparameters: Codable {
+    let learningRate: Float
+    let batchSize: Int
+    let epochs: Int
+    let dropoutRate: Float
+    let regularizationStrength: Float
+}
+
+struct Dataset: Codable {
+    let name: String
+    let size: Int
+    let features: [String]
+    let targetColumn: String
+    let splitRatio: Float
+}
+
+struct ValidationMetrics: Codable {
+    let accuracy: Float
+    let precision: Float
+    let recall: Float
+    let f1Score: Float
+    let confusionMatrix: [[Int]]
+}
+
+enum TrainingStatus: String, Codable {
+    case notStarted = "notStarted"
+    case preparing = "preparing"
+    case training = "training"
+    case completed = "completed"
+    case failed = "failed"
+    case paused = "paused"
 } 

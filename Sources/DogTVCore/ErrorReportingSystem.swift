@@ -1,5 +1,5 @@
 import Foundation
-import UIKit
+// import UIKit
 import os.log
 
 // MARK: - Error Reporting System
@@ -39,7 +39,7 @@ class ErrorReportingSystem {
     }
     
     /// Track performance metrics
-    func trackPerformance(_ metric: PerformanceMetric) {
+    func trackPerformance(_ metric: ErrorReportingPerformanceMetric) {
         performanceMonitor.trackMetric(metric)
     }
     
@@ -49,7 +49,7 @@ class ErrorReportingSystem {
     }
     
     /// Get error statistics
-    func getErrorStatistics() -> ErrorStatistics {
+    func getErrorStatistics() -> ErrorReportingErrorStatistics {
         return errorTracker.getStatistics()
     }
     
@@ -76,6 +76,7 @@ class ErrorReportingSystem {
             let crashReport = CrashReport(
                 type: .uncaughtException,
                 exception: exception,
+                signal: 0,
                 stackTrace: exception.callStackSymbols,
                 timestamp: Date(),
                 appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown",
@@ -96,6 +97,7 @@ class ErrorReportingSystem {
         signal(SIGABRT) { signal in
             let crashReport = CrashReport(
                 type: .signal,
+                exception: nil,
                 signal: signal,
                 stackTrace: Thread.callStackSymbols,
                 timestamp: Date(),
@@ -112,6 +114,7 @@ class ErrorReportingSystem {
         signal(SIGSEGV) { signal in
             let crashReport = CrashReport(
                 type: .signal,
+                exception: nil,
                 signal: signal,
                 stackTrace: Thread.callStackSymbols,
                 timestamp: Date(),
@@ -211,18 +214,19 @@ class ErrorTracker {
         sendErrorToRemoteService(trackedError)
     }
     
-    func getStatistics() -> ErrorStatistics {
+    func getStatistics() -> ErrorReportingErrorStatistics {
         let totalErrors = errors.count
-        let errorsByType = Dictionary(grouping: errors, by: { type(of: $0.error) })
+        let errorsByType = Dictionary(grouping: errors, by: { String(describing: type(of: $0.error)) })
             .mapValues { $0.count }
         let errorsByVersion = Dictionary(grouping: errors, by: { $0.appVersion })
             .mapValues { $0.count }
+        let recentErrors = Array(errors.suffix(10))
         
-        return ErrorStatistics(
+        return ErrorReportingErrorStatistics(
             totalErrors: totalErrors,
             errorsByType: errorsByType,
             errorsByVersion: errorsByVersion,
-            recentErrors: Array(errors.suffix(20))
+            recentErrors: recentErrors
         )
     }
     
@@ -238,7 +242,7 @@ class ErrorTracker {
 // MARK: - Performance Monitor
 class PerformanceMonitor {
     
-    private var metrics: [PerformanceMetric] = []
+    private var metrics: [ErrorReportingPerformanceMetric] = []
     private let metricStorage = MetricStorage()
     private let performanceAnalyzer = PerformanceAnalyzer()
     
@@ -248,7 +252,7 @@ class PerformanceMonitor {
         startPeriodicMonitoring()
     }
     
-    func trackMetric(_ metric: PerformanceMetric) {
+    func trackMetric(_ metric: ErrorReportingPerformanceMetric) {
         metrics.append(metric)
         metricStorage.storeMetric(metric)
         performanceAnalyzer.analyzeMetric(metric)
@@ -293,17 +297,12 @@ class PerformanceMonitor {
         let memoryUsage = getMemoryUsage()
         let diskUsage = getDiskUsage()
         
-        let systemMetric = PerformanceMetric(
+        let systemMetric = ErrorReportingPerformanceMetric(
             type: .system,
             name: "system_resources",
             value: cpuUsage,
-            unit: "percentage",
             timestamp: Date(),
-            metadata: [
-                "cpu_usage": cpuUsage,
-                "memory_usage": memoryUsage,
-                "disk_usage": diskUsage
-            ]
+            metadata: ["memory": String(memoryUsage), "disk": String(diskUsage)]
         )
         
         trackMetric(systemMetric)
@@ -324,7 +323,7 @@ class PerformanceMonitor {
         return 0.0 // Placeholder
     }
     
-    private func checkPerformanceThresholds(_ metric: PerformanceMetric) {
+    private func checkPerformanceThresholds(_ metric: ErrorReportingPerformanceMetric) {
         // Check if performance metrics exceed thresholds
         if metric.value > 90.0 && metric.type == .system {
             print("🚨 Performance threshold exceeded: \(metric.name) = \(metric.value)")
@@ -357,7 +356,7 @@ class AnalyticsCollector {
         let totalEvents = events.count
         let eventsByType = Dictionary(grouping: events, by: { $0.type })
             .mapValues { $0.count }
-        let eventsByUser = Dictionary(grouping: events, by: { $0.userId })
+        let eventsByUser = Dictionary(grouping: events, by: { $0.userId ?? "anonymous" })
             .mapValues { $0.count }
         
         return AnalyticsExport(
@@ -448,11 +447,11 @@ class ErrorStorage {
 }
 
 class MetricStorage {
-    func storeMetric(_ metric: PerformanceMetric) {
+    func storeMetric(_ metric: ErrorReportingPerformanceMetric) {
         // Store metric to persistent storage
     }
     
-    func loadStoredMetrics() -> [PerformanceMetric] {
+    func loadStoredMetrics() -> [ErrorReportingPerformanceMetric] {
         // Load stored metrics
         return []
     }
@@ -482,7 +481,7 @@ class ErrorAnalyzer {
 }
 
 class PerformanceAnalyzer {
-    func analyzeMetric(_ metric: PerformanceMetric) {
+    func analyzeMetric(_ metric: ErrorReportingPerformanceMetric) {
         // Analyze performance patterns and trends
     }
 }
@@ -531,13 +530,12 @@ struct ErrorContext {
     let additionalInfo: [String: Any]
 }
 
-struct PerformanceMetric {
+struct ErrorReportingPerformanceMetric {
     let type: MetricType
     let name: String
     let value: Double
-    let unit: String
     let timestamp: Date
-    let metadata: [String: Any]
+    let metadata: [String: String]
 }
 
 enum MetricType {
@@ -567,8 +565,8 @@ struct DeviceInfo {
     
     static var current: DeviceInfo {
         return DeviceInfo(
-            model: UIDevice.current.model,
-            systemVersion: UIDevice.current.systemVersion,
+            model: "Apple TV",
+            systemVersion: "tvOS",
             totalMemory: 0, // Implementation needed
             availableMemory: 0, // Implementation needed
             totalDiskSpace: 0, // Implementation needed
@@ -598,9 +596,9 @@ struct CrashStatistics {
     let recentCrashes: [CrashReport]
 }
 
-struct ErrorStatistics {
+struct ErrorReportingErrorStatistics {
     let totalErrors: Int
-    let errorsByType: [Any.Type: Int]
+    let errorsByType: [String: Int]
     let errorsByVersion: [String: Int]
     let recentErrors: [TrackedError]
 }
@@ -609,7 +607,7 @@ struct PerformanceStatistics {
     let totalMetrics: Int
     let metricsByType: [MetricType: Int]
     let averageMetrics: [MetricType: Double]
-    let recentMetrics: [PerformanceMetric]
+    let recentMetrics: [ErrorReportingPerformanceMetric]
 }
 
 struct AnalyticsExport {

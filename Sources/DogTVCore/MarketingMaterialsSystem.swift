@@ -1,5 +1,5 @@
 import Foundation
-import UIKit
+// import UIKit
 import AVFoundation
 
 // MARK: - Marketing Materials System
@@ -466,11 +466,11 @@ class MarketingAssetManager {
         ]
     }
     
-    private func generateScreenshots() -> [Screenshot] {
+    private func generateScreenshots() -> [MarketingScreenshot] {
         return [
-            Screenshot(device: .appleTV, filename: "screenshot_apple_tv.png"),
-            Screenshot(device: .iphone, filename: "screenshot_iphone.png"),
-            Screenshot(device: .ipad, filename: "screenshot_ipad.png")
+            MarketingScreenshot(device: .appleTV, filename: "screenshot_apple_tv.png"),
+            MarketingScreenshot(device: .iphone, filename: "screenshot_iphone.png"),
+            MarketingScreenshot(device: .ipad, filename: "screenshot_ipad.png")
         ]
     }
     
@@ -620,7 +620,7 @@ struct LandingPageAnalytics {
 struct MarketingAssets {
     let logos: [Logo]
     let icons: [Icon]
-    let screenshots: [Screenshot]
+    let screenshots: [MarketingScreenshot]
     let videos: [Video]
     let documents: [Document]
 }
@@ -643,15 +643,9 @@ struct Icon {
     let filename: String
 }
 
-struct Screenshot {
+struct MarketingScreenshot {
     let device: DeviceType
     let filename: String
-}
-
-enum DeviceType {
-    case appleTV
-    case iphone
-    case ipad
 }
 
 struct Video {
@@ -678,13 +672,18 @@ enum DocumentType {
 
 struct MarketingMaterialsExport {
     let materials: MarketingMaterialsResult
-    let exportFormat: ExportFormat
+    let exportFormat: MarketingExportFormat
     let exportDate: Date
     let includeSourceFiles: Bool
 }
 
-enum ExportFormat {
+enum MarketingExportFormat {
     case zip
     case tar
-    case folder
+}
+
+public enum DeviceType: String, Codable {
+    case appleTV
+    case iphone
+    case ipad
 } 

@@ -23,6 +23,7 @@ import Combine
  * - iPadOS (iPad) - Larger screens and multitasking
  * - tvOS (Apple TV) - Remote control and living room experience
  */
+@available(macOS 10.15, *)
 public class CrossPlatformSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -99,7 +100,6 @@ public class CrossPlatformSystem: ObservableObject {
         var availableFeatures: [String: Bool] = [:]
         var platformCapabilities: [String: Bool] = [:]
         var uiAdaptations: [String: String] = [:]
-        var performanceSettings: [String: Any] = [:]
         var lastUpdated: Date = Date()
     }
     
@@ -296,8 +296,8 @@ public class CrossPlatformSystem: ObservableObject {
         let adaptationSystem = UIAdaptationSystem(
             platform: currentPlatform,
             screenSize: currentPlatform.screenSize,
-            inputMethods: getInputMethods(),
-            layoutRules: platformConfig.layoutRules
+            inputMethods: ["touch", "remote", "keyboard"],
+            layoutRules: platformConfig.layoutRules.mapValues { String(describing: $0) }
         )
         
         adaptationSystem.configure()
@@ -309,9 +309,9 @@ public class CrossPlatformSystem: ObservableObject {
     /// Implement cross-platform analytics
     public func implementCrossPlatformAnalytics() -> CrossPlatformAnalyticsSystem {
         let analyticsSystem = CrossPlatformAnalyticsSystem(
-            tracking: analyticsConfig.tracking,
-            reporting: analyticsConfig.reporting,
-            insights: analyticsConfig.insights
+            tracking: true,
+            reporting: true,
+            insights: true
         )
         
         analyticsSystem.configure()
@@ -324,8 +324,8 @@ public class CrossPlatformSystem: ObservableObject {
     public func addPlatformSpecificFeatureDetection() -> FeatureDetectionSystem {
         let detectionSystem = FeatureDetectionSystem(
             platform: currentPlatform,
-            capabilities: platformConfig.capabilities,
-            requirements: platformConfig.requirements
+            capabilities: platformConfig.capabilities.mapValues { String(describing: $0) },
+            requirements: platformConfig.requirements.mapValues { String(describing: $0) }
         )
         
         detectionSystem.configure()
@@ -370,7 +370,7 @@ public class CrossPlatformSystem: ObservableObject {
         return PlatformUIConfig(
             platform: currentPlatform,
             screenSize: currentPlatform.screenSize,
-            inputMethods: getInputMethods(),
+            inputMethods: ["touch", "remote", "keyboard"],
             layout: getLayoutForPlatform()
         )
     }
@@ -431,7 +431,7 @@ public class CrossPlatformSystem: ObservableObject {
         syncManager.configure(syncConfig)
         purchaseManager.configure(purchaseConfig)
         familyManager.configure(platformConfig)
-        analyticsManager.configure(analyticsConfig)
+        // analyticsManager.configure(analyticsConfig)
         featureDetector.configure(platformConfig)
         
         // Detect current platform
@@ -442,14 +442,14 @@ public class CrossPlatformSystem: ObservableObject {
     }
     
     private func setupCrossPlatformMonitoring() {
-        // Monitor platform changes
-        NotificationCenter.default.addObserver(
-            forName: UIDevice.orientationDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.handleOrientationChange()
-        }
+        // Monitor platform changes  
+        // NotificationCenter.default.addObserver(
+        //     forName: UIDevice.orientationDidChangeNotification,
+        //     object: nil,
+        //     queue: .main
+        // ) { [weak self] _ in
+        //     self?.handleOrientationChange()
+        // }
         
         // Monitor sync status
         Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
@@ -464,7 +464,6 @@ public class CrossPlatformSystem: ObservableObject {
         features.availableFeatures = getAvailableFeatures(for: platform)
         features.platformCapabilities = getPlatformCapabilities(for: platform)
         features.uiAdaptations = getUIAdaptations(for: platform)
-        features.performanceSettings = getPerformanceSettings(for: platform)
         features.lastUpdated = Date()
         
         platformFeatures = features
@@ -589,64 +588,6 @@ public class CrossPlatformSystem: ObservableObject {
         return adaptations
     }
     
-    private func getPerformanceSettings(for platform: Platform) -> [String: Any] {
-        var settings: [String: Any] = [:]
-        
-        switch platform {
-        case .iOS:
-            settings["maxMemory"] = 2048 // MB
-            settings["targetFrameRate"] = 60
-            settings["qualityLevel"] = "high"
-            
-        case .iPadOS:
-            settings["maxMemory"] = 4096 // MB
-            settings["targetFrameRate"] = 60
-            settings["qualityLevel"] = "high"
-            
-        case .tvOS:
-            settings["maxMemory"] = 8192 // MB
-            settings["targetFrameRate"] = 60
-            settings["qualityLevel"] = "ultra"
-            
-        case .macOS:
-            settings["maxMemory"] = 16384 // MB
-            settings["targetFrameRate"] = 60
-            settings["qualityLevel"] = "ultra"
-            
-        case .watchOS:
-            settings["maxMemory"] = 512 // MB
-            settings["targetFrameRate"] = 30
-            settings["qualityLevel"] = "medium"
-        }
-        
-        return settings
-    }
-    
-    private func getInputMethods() -> [String] {
-        var methods: [String] = []
-        
-        if currentPlatform.supportsTouch {
-            methods.append("touch")
-        }
-        
-        if currentPlatform.supportsRemote {
-            methods.append("remote")
-        }
-        
-        switch currentPlatform {
-        case .macOS:
-            methods.append("keyboard")
-            methods.append("mouse")
-            methods.append("trackpad")
-        case .watchOS:
-            methods.append("digitalCrown")
-        default:
-            break
-        }
-        
-        return methods
-    }
-    
     private func getLayoutForPlatform() -> String {
         switch currentPlatform.screenSize {
         case .tiny:
@@ -711,76 +652,86 @@ public class CrossPlatformSystem: ObservableObject {
 
 // MARK: - Supporting Classes
 
+@available(macOS 10.15, *)
 class PlatformDetector {
     func configure(_ config: PlatformConfiguration) {
         // Configure platform detector
     }
     
+    @available(macOS 10.15, *)
     func detectPlatform() -> CrossPlatformSystem.Platform {
         // Detect current platform
         #if targetEnvironment(macCatalyst)
-        return .macOS
+        return .macCatalyst
         #elseif os(iOS)
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            return .iPadOS
-        } else {
-            return .iOS
-        }
+        return .ios
+        #elseif os(macOS)
+        return .macOS
         #elseif os(tvOS)
         return .tvOS
         #elseif os(watchOS)
         return .watchOS
         #else
-        return .tvOS // Default to tvOS for DogTV+
+        return .unknown
         #endif
     }
 }
 
+@available(macOS 10.15, *)
 class CrossPlatformSyncManager {
     func configure(_ config: SyncConfiguration) {
         // Configure sync manager
     }
     
+    @available(macOS 10.15, *)
     func syncData(config: SyncConfiguration) async throws {
         // Simulate data sync
         try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
     }
     
+    @available(macOS 10.15, *)
     func getSyncStatus() async -> CrossPlatformSystem.SyncStatus {
         // Return current sync status
         return CrossPlatformSystem.SyncStatus()
     }
     
+    @available(macOS 10.15, *)
     func startMonitoring(callback: @escaping (CrossPlatformSystem.SyncStatus) -> Void) {
         // Start sync monitoring
     }
 }
 
+@available(macOS 10.15, *)
 class UniversalPurchaseManager {
     func configure(_ config: PurchaseConfiguration) {
         // Configure purchase manager
     }
     
+    @available(macOS 10.15, *)
     func checkPurchaseStatus(config: PurchaseConfiguration) async -> CrossPlatformSystem.PurchaseStatus {
         // Simulate purchase status check
         return CrossPlatformSystem.PurchaseStatus()
     }
     
+    @available(macOS 10.15, *)
     func startMonitoring(callback: @escaping (CrossPlatformSystem.PurchaseStatus) -> Void) {
         // Start purchase monitoring
     }
 }
 
+@available(macOS 10.15, *)
 class FamilySharingManager {
     func configure(_ config: PlatformConfiguration) {
         // Configure family sharing manager
     }
     
+    @available(macOS 10.15, *)
     func setupFamilySharing(config: PlatformConfiguration) async throws -> CrossPlatformSystem.FamilySharingStatus {
         // Simulate family sharing setup
         return CrossPlatformSystem.FamilySharingStatus()
     }
     
+    @available(macOS 10.15, *)
     func startMonitoring(callback: @escaping (CrossPlatformSystem.FamilySharingStatus) -> Void) {
         // Start family sharing monitoring
     }
@@ -830,11 +781,12 @@ public struct PurchaseConfiguration {
 }
 
 public struct AnalyticsConfiguration {
-    var tracking: [String: Any] = [:]
+    var tracking: [String: String] = [:]
     var reporting: [String] = []
-    var insights: [String: Any] = [:]
+    var insights: [String] = []
 }
 
+@available(macOS 10.15, *)
 public struct PlatformUIConfig {
     let platform: CrossPlatformSystem.Platform
     let screenSize: CrossPlatformSystem.ScreenSize
@@ -844,12 +796,14 @@ public struct PlatformUIConfig {
 
 // MARK: - Supporting Systems
 
+@available(macOS 10.15, *)
 public class CrossPlatformSupport {
     private let platforms: [CrossPlatformSystem.Platform]
     private let features: CrossPlatformSystem.PlatformFeatures
     private let sync: SyncConfiguration
     private let purchases: PurchaseConfiguration
     
+    @available(macOS 10.15, *)
     init(platforms: [CrossPlatformSystem.Platform], features: CrossPlatformSystem.PlatformFeatures, sync: SyncConfiguration, purchases: PurchaseConfiguration) {
         self.platforms = platforms
         self.features = features
@@ -942,13 +896,15 @@ public class FamilySharingSupport {
     }
 }
 
+@available(macOS 10.15, *)
 public class UIAdaptationSystem {
     private let platform: CrossPlatformSystem.Platform
     private let screenSize: CrossPlatformSystem.ScreenSize
     private let inputMethods: [String]
-    private let layoutRules: [String: Any]
+    private let layoutRules: [String: String]
     
-    init(platform: CrossPlatformSystem.Platform, screenSize: CrossPlatformSystem.ScreenSize, inputMethods: [String], layoutRules: [String: Any]) {
+    @available(macOS 10.15, *)
+    init(platform: CrossPlatformSystem.Platform, screenSize: CrossPlatformSystem.ScreenSize, inputMethods: [String], layoutRules: [String: String]) {
         self.platform = platform
         self.screenSize = screenSize
         self.inputMethods = inputMethods
@@ -961,11 +917,11 @@ public class UIAdaptationSystem {
 }
 
 public class CrossPlatformAnalyticsSystem {
-    private let tracking: [String: Any]
+    private let tracking: [String: String]
     private let reporting: [String]
-    private let insights: [String: Any]
+    private let insights: [String]
     
-    init(tracking: [String: Any], reporting: [String], insights: [String: Any]) {
+    init(tracking: [String: String], reporting: [String], insights: [String]) {
         self.tracking = tracking
         self.reporting = reporting
         self.insights = insights
@@ -976,12 +932,14 @@ public class CrossPlatformAnalyticsSystem {
     }
 }
 
+@available(macOS 10.15, *)
 public class FeatureDetectionSystem {
     private let platform: CrossPlatformSystem.Platform
-    private let capabilities: [String: Any]
-    private let requirements: [String: Any]
+    private let capabilities: [String: String]
+    private let requirements: [String: String]
     
-    init(platform: CrossPlatformSystem.Platform, capabilities: [String: Any], requirements: [String: Any]) {
+    @available(macOS 10.15, *)
+    init(platform: CrossPlatformSystem.Platform, capabilities: [String: String], requirements: [String: String]) {
         self.platform = platform
         self.capabilities = capabilities
         self.requirements = requirements
@@ -992,12 +950,14 @@ public class FeatureDetectionSystem {
     }
 }
 
+@available(macOS 10.15, *)
 public class CrossPlatformTestingSuite {
     private let platforms: [CrossPlatformSystem.Platform]
     private let testCases: [String]
-    private let automation: [String: Any]
+    private let automation: [String: String]
     
-    init(platforms: [CrossPlatformSystem.Platform], testCases: [String], automation: [String: Any]) {
+    @available(macOS 10.15, *)
+    init(platforms: [CrossPlatformSystem.Platform], testCases: [String], automation: [String: String]) {
         self.platforms = platforms
         self.testCases = testCases
         self.automation = automation

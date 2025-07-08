@@ -548,7 +548,7 @@ class LaunchChecklistManager {
 }
 
 // MARK: - Social Media Manager
-class SocialMediaManager {
+class LaunchSocialMediaManager {
     
     private let campaignPlanner = CampaignPlanner()
     private let contentManager = ContentManager()
@@ -719,7 +719,7 @@ class SocialMediaManager {
 // MARK: - Customer Support Manager
 class CustomerSupportManager {
     
-    private let trainingManager = TrainingManager()
+    private let trainingManager = LaunchTrainingManager()
     private let toolManager = ToolManager()
     private let documentationManager = DocumentationManager()
     
@@ -1050,7 +1050,7 @@ class AnalyticsManager {
     func initialize() {}
 }
 
-class TrainingManager {
+class LaunchTrainingManager {
     func initialize() {}
 }
 
@@ -1376,13 +1376,14 @@ struct SupportDocumentation {
 struct DocumentationResource {
     let name: String
     let type: String
-    let status: ResourceStatus
+    let status: LaunchResourceStatus
 }
 
-enum ResourceStatus {
+enum LaunchResourceStatus {
     case pending
     case inProgress
     case completed
+    case failed
 }
 
 struct EscalationProcedures {

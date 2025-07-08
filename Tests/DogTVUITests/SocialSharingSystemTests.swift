@@ -2,7 +2,6 @@ import XCTest
 import Metal
 import CoreImage
 import Vision
-import UIKit
 
 @testable import DogTV_
 

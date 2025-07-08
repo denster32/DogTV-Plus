@@ -36,6 +36,9 @@ import Network
  * - Advanced antenna systems (MIMO, beamforming)
  * - Network edge computing integration
  */
+// MARK: - Advanced Networking System
+/// Advanced networking capabilities for DogTV+
+@available(macOS 10.15, *)
 public class AdvancedNetworkingSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -46,11 +49,11 @@ public class AdvancedNetworkingSystem: ObservableObject {
     @Published public var performanceAnalytics: PerformanceAnalytics = PerformanceAnalytics()
     
     // MARK: - System Components
-    private let networkManager = NetworkManager()
+    private let networkManager = NetworkingNetworkManager()
     private let connectivityEngine = ConnectivityEngine()
     private let bandwidthManager = BandwidthManager()
     private let securityEngine = SecurityEngine()
-    private let performanceMonitor = PerformanceMonitor()
+    private let performanceMonitor = NetworkingPerformanceMonitor()
     private let networkSlicer = NetworkSlicer()
     private let edgeCache = EdgeCache()
     private let protocolOptimizer = ProtocolOptimizer()
@@ -78,9 +81,6 @@ public class AdvancedNetworkingSystem: ObservableObject {
         case wifi = "WiFi"
         case cellular = "Cellular"
         case ethernet = "Ethernet"
-        case bluetooth = "Bluetooth"
-        case satellite = "Satellite"
-        case mesh = "Mesh Network"
         case unknown = "Unknown"
     }
     
@@ -102,7 +102,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct NetworkConnection: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var type: ConnectionType
         var generation: NetworkGeneration
@@ -158,7 +158,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct ConnectionPolicy: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var description: String
         var conditions: [PolicyCondition]
@@ -168,10 +168,10 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct PolicyCondition: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var type: ConditionType
         var parameter: String
-        var operator: ConditionOperator
+        var `operator`: ConditionOperator
         var value: String
     }
     
@@ -195,7 +195,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct PolicyAction: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var type: ActionType
         var parameters: [String: String]
     }
@@ -247,7 +247,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct BandwidthPolicy: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var description: String
         var conditions: [PolicyCondition]
@@ -276,7 +276,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct SecurityPolicy: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var description: String
         var rules: [SecurityRule]
@@ -284,7 +284,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct SecurityRule: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var type: SecurityRuleType
         var source: String
         var destination: String
@@ -315,7 +315,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct NetworkMetric: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var value: Float
         var unit: String
@@ -333,7 +333,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct HistoricalMetric: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var metricName: String
         var dataPoints: [MetricDataPoint] = []
         var timeRange: TimeRange
@@ -362,7 +362,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct PerformanceInsight: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var title: String
         var description: String
         var insightType: InsightType
@@ -387,7 +387,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     public struct OptimizationRecommendation: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var title: String
         var description: String
         var category: OptimizationCategory
@@ -442,7 +442,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     /// Connect to network
-    public func connectToNetwork(_ connectionType: ConnectionType) async throws {
+    public func connectToNetwork(_ connectionType: AdvancedNetworkingSystem.ConnectionType) async throws {
         try await connectivityEngine.connect(connectionType: connectionType)
         
         // Update connectivity manager
@@ -502,7 +502,7 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     /// Monitor network quality
-    public func monitorNetworkQuality() async -> NetworkQuality {
+    public func monitorNetworkQuality() async -> AdvancedNetworkQuality {
         let quality = await performanceMonitor.getNetworkQuality()
         
         print("Network quality monitored")
@@ -571,17 +571,10 @@ public class AdvancedNetworkingSystem: ObservableObject {
     }
     
     private func initializeNetworking() {
-        Task {
-            // Initialize network manager
-            await initializeNetworkManager()
-            
-            // Initialize connectivity engine
-            await initializeConnectivityEngine()
-            
-            // Initialize performance monitor
-            await initializePerformanceMonitor()
-            
-            print("Advanced networking system initialized")
+        if #available(macOS 10.15, *) {
+            Task {
+                await initializeNetworkManager()
+            }
         }
     }
     
@@ -645,35 +638,6 @@ public class AdvancedNetworkingSystem: ObservableObject {
 
 // MARK: - Supporting Classes
 
-class NetworkManager {
-    func configure(_ config: NetworkConfiguration) {
-        // Configure network manager
-    }
-    
-    func initialize() async {
-        // Initialize network manager
-    }
-    
-    func initializeSystem(config: NetworkConfiguration) async throws {
-        // Simulate initializing networking system
-    }
-    
-    func getNetworkStatus() async -> NetworkStatus {
-        // Simulate getting network status
-        return NetworkStatus(
-            connectionType: .wifi,
-            networkGeneration: .fiveG,
-            signalStrength: 0.85,
-            bandwidth: 100.0,
-            latency: 0.02,
-            jitter: 0.005,
-            packetLoss: 0.001,
-            isConnected: true,
-            lastUpdated: Date()
-        )
-    }
-}
-
 class ConnectivityEngine {
     func configure(_ config: ConnectivityConfiguration) {
         // Configure connectivity engine
@@ -736,7 +700,8 @@ class SecurityEngine {
     }
 }
 
-class PerformanceMonitor {
+// PerformanceMonitor is already defined elsewhere - using stub
+class NetworkingPerformanceMonitor {
     func configure(_ config: NetworkConfiguration) {
         // Configure performance monitor
     }
@@ -750,15 +715,14 @@ class PerformanceMonitor {
         return []
     }
     
-    func getNetworkQuality() async -> NetworkQuality {
+    func getNetworkQuality() async -> AdvancedNetworkQuality {
         // Simulate getting network quality
-        return NetworkQuality(
+        return AdvancedNetworkQuality(
             overallQuality: 0.9,
             latency: 0.02,
             jitter: 0.005,
             packetLoss: 0.001,
-            bandwidth: 100.0,
-            timestamp: Date()
+            bandwidth: 100.0
         )
     }
     
@@ -802,11 +766,11 @@ class ProtocolOptimizer {
 
 public struct NetworkConfiguration {
     var maxConnections: Int = 10
-    var connectionTimeout: TimeInterval = 30.0
+    var timeout: TimeInterval = 30.0
     var retryAttempts: Int = 3
     var enableCompression: Bool = true
     var enableCaching: Bool = true
-    var securityLevel: SecurityLevel = .high
+    var securityLevel: NetworkingSecurityLevel = .high
 }
 
 public struct ConnectivityConfiguration {
@@ -817,14 +781,15 @@ public struct ConnectivityConfiguration {
 }
 
 public struct SecurityConfiguration {
-    var encryptionRequired: Bool = true
+    var encryptionEnabled: Bool = true
     var certificateValidation: Bool = true
     var firewallEnabled: Bool = true
     var vpnEnabled: Bool = false
-    var securityLevel: SecurityLevel = .high
+    var securityLevel: NetworkingSecurityLevel = .high
 }
 
-public enum SecurityLevel: String, CaseIterable, Codable {
+// SecurityLevel is already defined elsewhere - using stub
+public enum NetworkingSecurityLevel: String, CaseIterable, Codable {
     case low = "Low"
     case medium = "Medium"
     case high = "High"
@@ -845,13 +810,12 @@ public struct ResourceRequirements: Codable {
     let security: SecurityLevel
 }
 
-public struct NetworkQuality: Codable {
+public struct AdvancedNetworkQuality: Codable {
     let overallQuality: Float
     let latency: TimeInterval
     let jitter: TimeInterval
     let packetLoss: Float
     let bandwidth: Float
-    let timestamp: Date
 }
 
 public struct ConnectivityRecommendation: Codable {
@@ -860,4 +824,38 @@ public struct ConnectivityRecommendation: Codable {
     let action: String
     let priority: Int
     let estimatedImpact: String
-} 
+}
+
+// Add missing NetworkingNetworkManager class
+class NetworkingNetworkManager {
+    func configure(_ config: NetworkConfiguration) {
+        // Configure network manager
+    }
+    
+    func initialize() async {
+        // Initialize network manager
+    }
+    
+    func getNetworkStatus() async -> NetworkStatus {
+        // Simulate getting network status
+        return NetworkStatus(
+            isConnected: true,
+            connectionType: .wifi,
+            signalStrength: 0.9,
+            bandwidth: 100.0,
+            latency: 0.02
+        )
+    }
+}
+
+// Add missing NetworkStatus struct
+struct NetworkStatus: Codable {
+    let isConnected: Bool
+    let connectionType: ConnectionType
+    let signalStrength: Float
+    let bandwidth: Float
+    let latency: TimeInterval
+}
+
+
+ 

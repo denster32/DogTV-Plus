@@ -6,6 +6,7 @@ import SwiftUI
 public struct DogTVCore {
     
     /// Main app coordinator that manages the overall application state
+    @available(macOS 10.15, *)
     public class AppCoordinator: ObservableObject {
         @Published public var currentView: AppView = .landing
         @Published public var isVisionModeEnabled: Bool = false
@@ -16,14 +17,22 @@ public struct DogTVCore {
         
         /// Navigate to a specific view
         public func navigate(to view: AppView) {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            if #available(macOS 10.15, *) {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentView = view
+                }
+            } else {
                 currentView = view
             }
         }
         
         /// Toggle vision mode between human and dog vision
         public func toggleVisionMode() {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            if #available(macOS 10.15, *) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    isVisionModeEnabled.toggle()
+                }
+            } else {
                 isVisionModeEnabled.toggle()
             }
         }
@@ -168,6 +177,7 @@ public struct DogTVCore {
 
 // MARK: - Extensions
 
+@available(macOS 10.15, *)
 extension DogTVCore.AppCoordinator {
     /// Load user preferences
     public func loadPreferences() -> DogTVCore.UserPreferences {

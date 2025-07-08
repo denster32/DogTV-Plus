@@ -1,9 +1,9 @@
 import Foundation
-import XcodeBuild
 
 // MARK: - CI/CD Pipeline System
-/// Comprehensive CI/CD pipeline for automated builds, testing, and deployment
-class CICDPipelineSystem {
+/// Comprehensive CI/CD pipeline system for DogTV+
+@available(macOS 10.15, *)
+public class CICDPipelineSystem: ObservableObject {
     
     // MARK: - Properties
     private let buildAutomator = BuildAutomator()
@@ -109,6 +109,7 @@ class CICDPipelineSystem {
 }
 
 // MARK: - Build Automator
+@available(macOS 10.15, *)
 class BuildAutomator {
     
     private let xcodeBuilder = XcodeBuilder()
@@ -119,6 +120,7 @@ class BuildAutomator {
         buildCache.initialize()
     }
     
+    @available(macOS 10.15, *)
     func buildProject(for commit: GitCommit) async throws -> BuildResult {
         print("🏗️ Building project for commit: \(commit.hash)")
         
@@ -137,6 +139,7 @@ class BuildAutomator {
         return buildResult
     }
     
+    @available(macOS 10.15, *)
     private func performBuild(for commit: GitCommit) async throws -> BuildResult {
         let configuration = BuildConfiguration(
             scheme: "DogTV+",
@@ -158,7 +161,9 @@ class BuildAutomator {
                 outputPath: buildOutput.appPath,
                 warnings: buildOutput.warnings,
                 errors: buildOutput.errors,
-                commit: commit
+                commit: commit,
+                buildNumber: "1.0.0",
+                version: "1.0.0"
             )
         } catch {
             let endTime = Date()
@@ -169,13 +174,16 @@ class BuildAutomator {
                 outputPath: nil,
                 warnings: [],
                 errors: [error.localizedDescription],
-                commit: commit
+                commit: commit,
+                buildNumber: "1.0.0",
+                version: "1.0.0"
             )
         }
     }
 }
 
 // MARK: - Test Runner
+@available(macOS 10.15, *)
 class TestRunner {
     
     private let unitTestRunner = UnitTestRunner()
@@ -191,15 +199,16 @@ class TestRunner {
         performanceTestRunner.initialize()
     }
     
+    @available(macOS 10.15, *)
     func runAllTests(for buildResult: BuildResult) async throws -> TestResult {
         print("🧪 Running all tests...")
         
         guard buildResult.success else {
             return TestResult(
-                unitTests: TestSuiteResult(success: false, testsRun: 0, testsPassed: 0),
-                integrationTests: TestSuiteResult(success: false, testsRun: 0, testsPassed: 0),
-                uiTests: TestSuiteResult(success: false, testsRun: 0, testsPassed: 0),
-                performanceTests: TestSuiteResult(success: false, testsRun: 0, testsPassed: 0),
+                unitTests: CICDTestSuiteResult(success: false, testsRun: 0, testsPassed: 0, testsFailed: 0, duration: 0.0),
+                integrationTests: CICDTestSuiteResult(success: false, testsRun: 0, testsPassed: 0, testsFailed: 0, duration: 0.0),
+                uiTests: CICDTestSuiteResult(success: false, testsRun: 0, testsPassed: 0, testsFailed: 0, duration: 0.0),
+                performanceTests: CICDTestSuiteResult(success: false, testsRun: 0, testsPassed: 0, testsFailed: 0, duration: 0.0),
                 totalTests: 0,
                 totalPassed: 0,
                 coverage: 0.0
@@ -231,6 +240,7 @@ class TestRunner {
 }
 
 // MARK: - Code Quality Checker
+@available(macOS 10.15, *)
 class CodeQualityChecker {
     
     private let swiftLintRunner = SwiftLintRunner()
@@ -246,6 +256,7 @@ class CodeQualityChecker {
         securityScanner.initialize()
     }
     
+    @available(macOS 10.15, *)
     func checkQuality(for commit: GitCommit) async throws -> CodeQualityResult {
         print("🔍 Checking code quality...")
         
@@ -273,6 +284,7 @@ class CodeQualityChecker {
 }
 
 // MARK: - Deployment Manager
+@available(macOS 10.15, *)
 class DeploymentManager {
     
     private let testFlightDeployer = TestFlightDeployer()
@@ -286,6 +298,7 @@ class DeploymentManager {
         stagingDeployer.initialize()
     }
     
+    @available(macOS 10.15, *)
     func deployToTesting(_ buildResult: BuildResult) async throws -> DeploymentResult {
         print("🚀 Deploying to testing environment...")
         
@@ -318,6 +331,7 @@ class DeploymentManager {
 }
 
 // MARK: - App Store Submitter
+@available(macOS 10.15, *)
 class AppStoreSubmitter {
     
     private let appStoreConnect = AppStoreConnect()
@@ -329,6 +343,7 @@ class AppStoreSubmitter {
         submissionValidator.initialize()
     }
     
+    @available(macOS 10.15, *)
     func submit(_ buildResult: BuildResult, to environment: AppStoreEnvironment) async throws -> AppStoreSubmissionResult {
         print("📱 Submitting to App Store (\(environment))...")
         
@@ -340,7 +355,9 @@ class AppStoreSubmitter {
                 success: false,
                 environment: environment,
                 submissionTime: Date(),
-                validationErrors: validation.errors
+                buildNumber: buildResult.buildNumber,
+                version: buildResult.version,
+                validationErrors: validation.issues
             )
         }
         
@@ -352,7 +369,8 @@ class AppStoreSubmitter {
             environment: environment,
             submissionTime: Date(),
             buildNumber: submission.buildNumber,
-            version: submission.version
+            version: submission.version,
+            validationErrors: []
         )
     }
 }
@@ -391,6 +409,7 @@ class PipelineMonitor {
 
 // MARK: - Supporting Classes
 
+@available(macOS 10.15, *)
 class XcodeBuilder {
     func build(_ configuration: BuildConfiguration) async throws -> BuildOutput {
         // This would integrate with actual Xcode build system
@@ -406,89 +425,100 @@ class XcodeBuilder {
     }
 }
 
+@available(macOS 10.15, *)
 class UnitTestRunner {
     func initialize() {}
     
-    func runTests(_ buildResult: BuildResult) async throws -> TestSuiteResult {
+    func runTests(_ buildResult: BuildResult) async throws -> CICDTestSuiteResult {
         // Simulate unit test execution
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        return TestSuiteResult(
+        return CICDTestSuiteResult(
             success: true,
             testsRun: 150,
             testsPassed: 148,
-            duration: 2.0
+            testsFailed: 2,
+            duration: 45.0
         )
     }
 }
 
+@available(macOS 10.15, *)
 class IntegrationTestRunner {
     func initialize() {}
     
-    func runTests(_ buildResult: BuildResult) async throws -> TestSuiteResult {
+    func runTests(_ buildResult: BuildResult) async throws -> CICDTestSuiteResult {
         // Simulate integration test execution
         try await Task.sleep(nanoseconds: 3_000_000_000)
         
-        return TestSuiteResult(
+        return CICDTestSuiteResult(
             success: true,
             testsRun: 25,
             testsPassed: 25,
-            duration: 3.0
+            testsFailed: 0,
+            duration: 120.0
         )
     }
 }
 
+@available(macOS 10.15, *)
 class UITestRunner {
     func initialize() {}
     
-    func runTests(_ buildResult: BuildResult) async throws -> TestSuiteResult {
+    func runTests(_ buildResult: BuildResult) async throws -> CICDTestSuiteResult {
         // Simulate UI test execution
         try await Task.sleep(nanoseconds: 4_000_000_000)
         
-        return TestSuiteResult(
-            success: true,
-            testsRun: 30,
-            testsPassed: 29,
-            duration: 4.0
-        )
-    }
-}
-
-class PerformanceTestRunner {
-    func initialize() {}
-    
-    func runTests(_ buildResult: BuildResult) async throws -> TestSuiteResult {
-        // Simulate performance test execution
-        try await Task.sleep(nanoseconds: 2_500_000_000)
-        
-        return TestSuiteResult(
+        return CICDTestSuiteResult(
             success: true,
             testsRun: 10,
             testsPassed: 10,
-            duration: 2.5
+            testsFailed: 0,
+            duration: 180.0
         )
     }
 }
 
+@available(macOS 10.15, *)
+class PerformanceTestRunner {
+    func initialize() {}
+    
+    func runTests(_ buildResult: BuildResult) async throws -> CICDTestSuiteResult {
+        // Simulate performance test execution
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+        
+        return CICDTestSuiteResult(
+            success: true,
+            testsRun: 5,
+            testsPassed: 5,
+            testsFailed: 0,
+            duration: 90.0
+        )
+    }
+}
+
+@available(macOS 10.15, *)
 class SwiftLintRunner {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func runLint(_ commit: GitCommit) async throws -> SwiftLintResult {
         // Simulate SwiftLint execution
         try await Task.sleep(nanoseconds: 1_000_000_000)
         
         return SwiftLintResult(
             passed: true,
-            warnings: 5,
-            errors: 0,
-            violations: []
+            issues: [],
+            score: 95.0
         )
     }
 }
 
+@available(macOS 10.15, *)
 class StaticAnalyzer {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func analyze(_ commit: GitCommit) async throws -> StaticAnalysisResult {
         // Simulate static analysis
         try await Task.sleep(nanoseconds: 1_500_000_000)
@@ -496,14 +526,16 @@ class StaticAnalyzer {
         return StaticAnalysisResult(
             passed: true,
             issues: [],
-            complexity: "Low"
+            score: 92.0
         )
     }
 }
 
+@available(macOS 10.15, *)
 class CodeCoverageAnalyzer {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func analyzeCoverage(_ commit: GitCommit) async throws -> CodeCoverageResult {
         // Simulate code coverage analysis
         try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -511,14 +543,17 @@ class CodeCoverageAnalyzer {
         return CodeCoverageResult(
             coverage: 85.5,
             linesCovered: 1250,
-            totalLines: 1462
+            totalLines: 1460,
+            passed: true
         )
     }
 }
 
+@available(macOS 10.15, *)
 class SecurityScanner {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func scan(_ commit: GitCommit) async throws -> SecurityScanResult {
         // Simulate security scan
         try await Task.sleep(nanoseconds: 2_000_000_000)
@@ -526,79 +561,95 @@ class SecurityScanner {
         return SecurityScanResult(
             passed: true,
             vulnerabilities: [],
-            riskLevel: "Low"
+            score: 98.0
         )
     }
 }
 
+@available(macOS 10.15, *)
 class TestFlightDeployer {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func deploy(_ buildResult: BuildResult) async throws -> TestFlightDeploymentResult {
         // Simulate TestFlight deployment
         try await Task.sleep(nanoseconds: 3_000_000_000)
         
         return TestFlightDeploymentResult(
             success: true,
-            buildNumber: "1.0.0.123",
-            processingState: "PROCESSING"
+            buildNumber: buildResult.buildNumber,
+            uploadedAt: Date()
         )
     }
 }
 
+@available(macOS 10.15, *)
 class InternalDeployer {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func deploy(_ buildResult: BuildResult) async throws -> InternalDeploymentResult {
         // Simulate internal deployment
         try await Task.sleep(nanoseconds: 1_000_000_000)
         
         return InternalDeploymentResult(
             success: true,
-            downloadUrl: "https://internal.dogtv.com/builds/latest"
+            buildNumber: buildResult.buildNumber,
+            deployedAt: Date()
         )
     }
 }
 
+@available(macOS 10.15, *)
 class StagingDeployer {
     func initialize() {}
     
+    @available(macOS 10.15, *)
     func deploy(_ buildResult: BuildResult) async throws -> StagingDeploymentResult {
         // Simulate staging deployment
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
         return StagingDeploymentResult(
             success: true,
-            stagingUrl: "https://staging.dogtv.com"
+            buildNumber: buildResult.buildNumber,
+            deployedAt: Date()
         )
     }
 }
 
+@available(macOS 10.15, *)
 class AppStoreConnect {
     func initialize() {}
     
-    func submit(_ buildResult: BuildResult, to environment: AppStoreEnvironment) async throws -> AppStoreSubmission {
+    @available(macOS 10.15, *)
+    func submit(_ buildResult: BuildResult, to environment: AppStoreEnvironment) async throws -> CICDAppStoreSubmission {
         // Simulate App Store submission
         try await Task.sleep(nanoseconds: 5_000_000_000)
         
-        return AppStoreSubmission(
+        return CICDAppStoreSubmission(
             success: true,
-            buildNumber: "1.0.0.123",
-            version: "1.0.0"
+            buildNumber: buildResult.buildNumber,
+            version: buildResult.version,
+            submittedAt: Date(),
+            validationResults: []
         )
     }
 }
 
+@available(macOS 10.15, *)
 class SubmissionValidator {
     func initialize() {}
     
-    func validate(_ buildResult: BuildResult, for environment: AppStoreEnvironment) async throws -> SubmissionValidation {
+    @available(macOS 10.15, *)
+    func validate(_ buildResult: BuildResult, for environment: AppStoreEnvironment) async throws -> CICDSubmissionValidation {
         // Simulate submission validation
         try await Task.sleep(nanoseconds: 1_000_000_000)
         
-        return SubmissionValidation(
+        return CICDSubmissionValidation(
             passed: true,
-            errors: []
+            issues: [],
+            warnings: [],
+            recommendations: []
         )
     }
 }
@@ -657,13 +708,38 @@ struct BuildResult {
     let warnings: [String]
     let errors: [String]
     let commit: GitCommit
+    let buildNumber: String
+    let version: String
+}
+
+struct CICDTestSuiteResult {
+    let success: Bool
+    let testsRun: Int
+    let testsPassed: Int
+    let testsFailed: Int
+    let duration: TimeInterval
+}
+
+struct CICDAppStoreSubmission {
+    let success: Bool
+    let buildNumber: String
+    let version: String
+    let submittedAt: Date
+    let validationResults: [String]
+}
+
+struct CICDSubmissionValidation {
+    let passed: Bool
+    let issues: [String]
+    let warnings: [String]
+    let recommendations: [String]
 }
 
 struct TestResult {
-    let unitTests: TestSuiteResult
-    let integrationTests: TestSuiteResult
-    let uiTests: TestSuiteResult
-    let performanceTests: TestSuiteResult
+    let unitTests: CICDTestSuiteResult
+    let integrationTests: CICDTestSuiteResult
+    let uiTests: CICDTestSuiteResult
+    let performanceTests: CICDTestSuiteResult
     let totalTests: Int
     let totalPassed: Int
     let coverage: Double
@@ -676,13 +752,6 @@ struct TestResult {
     }
 }
 
-struct TestSuiteResult {
-    let success: Bool
-    let testsRun: Int
-    let testsPassed: Int
-    let duration: TimeInterval
-}
-
 struct CodeQualityResult {
     let swiftLint: SwiftLintResult
     let staticAnalysis: StaticAnalysisResult
@@ -693,27 +762,27 @@ struct CodeQualityResult {
 
 struct SwiftLintResult {
     let passed: Bool
-    let warnings: Int
-    let errors: Int
-    let violations: [String]
+    let issues: [String]
+    let score: Double
 }
 
 struct StaticAnalysisResult {
     let passed: Bool
     let issues: [String]
-    let complexity: String
+    let score: Double
 }
 
 struct CodeCoverageResult {
     let coverage: Double
     let linesCovered: Int
     let totalLines: Int
+    let passed: Bool
 }
 
 struct SecurityScanResult {
     let passed: Bool
     let vulnerabilities: [String]
-    let riskLevel: String
+    let score: Double
 }
 
 struct DeploymentResult {
@@ -726,7 +795,7 @@ struct DeploymentResult {
 }
 
 enum DeploymentEnvironment {
-    case internal
+    case `internal`
     case staging
     case testFlight
     case production
@@ -734,26 +803,28 @@ enum DeploymentEnvironment {
 
 struct InternalDeploymentResult {
     let success: Bool
-    let downloadUrl: String
+    let buildNumber: String
+    let deployedAt: Date
 }
 
 struct TestFlightDeploymentResult {
     let success: Bool
     let buildNumber: String
-    let processingState: String
+    let uploadedAt: Date
 }
 
 struct StagingDeploymentResult {
     let success: Bool
-    let stagingUrl: String
+    let buildNumber: String
+    let deployedAt: Date
 }
 
 struct AppStoreSubmissionResult {
     let success: Bool
     let environment: AppStoreEnvironment
     let submissionTime: Date
-    let buildNumber: String?
-    let version: String?
+    let buildNumber: String
+    let version: String
     let validationErrors: [String]
 }
 
@@ -762,16 +833,7 @@ enum AppStoreEnvironment {
     case production
 }
 
-struct AppStoreSubmission {
-    let success: Bool
-    let buildNumber: String
-    let version: String
-}
 
-struct SubmissionValidation {
-    let passed: Bool
-    let errors: [String]
-}
 
 enum PipelineStatus {
     case idle

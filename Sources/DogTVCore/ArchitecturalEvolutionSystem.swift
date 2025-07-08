@@ -1,13 +1,13 @@
 import Foundation
-import SwiftPackageManager
 
 // MARK: - Architectural Evolution System
 /// Comprehensive system for evolving the architecture through modularization and best practices
+@available(macOS 10.15, *)
 class ArchitecturalEvolutionSystem {
     
     // MARK: - Properties
     private let modularizationManager = ModularizationManager()
-    private let dependencyManager = DependencyManager()
+    private let dependencyManager = ArchitecturalDependencyManager()
     private let architecturalGuidelines = ArchitecturalGuidelines()
     private let codeReviewer = CodeReviewer()
     private let refactoringAnalyzer = RefactoringAnalyzer()
@@ -15,14 +15,14 @@ class ArchitecturalEvolutionSystem {
     // MARK: - Public Interface
     
     /// Initialize the architectural evolution system
-    func initialize() {
+    @available(macOS 10.15, *)
+    func initialize() async {
         print("🏗️ Initializing architectural evolution system...")
         
         modularizationManager.initialize()
-        dependencyManager.initialize()
+        await dependencyManager.initialize()
         architecturalGuidelines.initialize()
         codeReviewer.initialize()
-        refactoringAnalyzer.initialize()
     }
     
     /// Perform complete architectural evolution
@@ -99,9 +99,32 @@ class ArchitecturalEvolutionSystem {
         let validation = EvolutionValidator()
         return try await validation.validateEvolution()
     }
+    
+    private func prioritizeModularization(_ candidates: [ModularizationCandidate]) async throws -> [ModularizationPriorityInfo] {
+        return candidates.map { candidate in
+            ModularizationPriorityInfo(
+                candidate: candidate,
+                priority: candidate.priority,
+                businessValue: calculateBusinessValue(candidate),
+                technicalValue: calculateTechnicalValue(candidate)
+            )
+        }.sorted { $0.priority.rawValue > $1.priority.rawValue }
+    }
+    
+    private func createModularizationRoadmap(_ priorities: [ModularizationPriorityInfo]) async throws -> ModularizationRoadmap {
+        let phases = try await createPhases(from: priorities)
+        return ModularizationRoadmap(
+            phases: phases,
+            totalDuration: "6 weeks",
+            totalEffort: "120 hours",
+            riskAssessment: "Low",
+            successMetrics: ["Code coverage > 80%", "Build time < 5 minutes"]
+        )
+    }
 }
 
 // MARK: - Modularization Manager
+@available(macOS 10.15, *)
 class ModularizationManager {
     
     private let systemAnalyzer = SystemAnalyzer()
@@ -173,6 +196,139 @@ class ModularizationManager {
             totalModules: results.count,
             successfulModules: results.filter { $0.success }.count
         )
+    }
+    
+    @available(macOS 10.15, *)
+    private func extractModule(from candidate: ModularizationCandidate) async throws -> ModuleExtractionResult {
+        print("🔧 Extracting module: \(candidate.systemClass)")
+        try await Task.sleep(nanoseconds: 2_000_000_000)
+        let extractedModules = candidate.subModules.map { moduleName in
+            ExtractedModule(
+                name: moduleName,
+                originalClass: candidate.systemClass,
+                size: Int.random(in: 200...800),
+                dependencies: generateModuleDependencies(moduleName),
+                interface: generateModuleInterface(moduleName)
+            )
+        }
+        return ModuleExtractionResult(
+            candidate: candidate,
+            extractedModules: extractedModules,
+            success: true,
+            extractionTime: Date(),
+            changes: generateExtractionChanges(candidate)
+        )
+    }
+    
+    private func updateDependenciesAfterModularization(_ results: [ModuleExtractionResult]) async throws {
+        print("🔗 Updating dependencies after modularization...")
+        // This would update project dependencies and references
+    }
+    
+    private func generateInterfaces(for results: [ModuleExtractionResult]) async throws -> [ModuleInterface] {
+        return results.flatMap { result in
+            result.extractedModules.map { module in
+                ModuleInterface(
+                    moduleName: module.name,
+                    protocolName: "\(module.name)Protocol",
+                    methods: generateInterfaceMethods(module),
+                    properties: generateInterfaceProperties(module)
+                )
+            }
+        }
+    }
+    
+    private func injectDependencies(for results: [ModuleExtractionResult], interfaces: [ModuleInterface]) async throws {
+        print("💉 Injecting dependencies...")
+        // This would update the original classes to use dependency injection
+    }
+    
+    private func calculateEstimatedEffort(_ roadmap: ModularizationRoadmap) -> String {
+        return roadmap.totalEffort
+    }
+    
+    private func calculateBusinessValue(_ candidate: ModularizationCandidate) -> Double {
+        // Simulate business value calculation
+        return Double.random(in: 0.1...1.0)
+    }
+    
+    private func calculateTechnicalValue(_ candidate: ModularizationCandidate) -> Double {
+        // Simulate technical value calculation
+        return Double.random(in: 0.1...1.0)
+    }
+    
+    private func generateModuleDependencies(_ moduleName: String) -> [String] {
+        let commonDependencies = ["Foundation"]
+        
+        switch moduleName {
+        case "BehaviorDetector":
+            return commonDependencies + ["Vision", "CoreML"]
+        case "MLModelManager":
+            return commonDependencies + ["CoreML"]
+        case "AnalysisEngine":
+            return commonDependencies + ["AVFoundation"]
+        case "DataProcessor":
+            return commonDependencies + ["CoreData"]
+        default:
+            return commonDependencies
+        }
+    }
+    
+    private func generateModuleInterface(_ moduleName: String) -> String {
+        return """
+        protocol \(moduleName)Protocol {
+            func initialize()
+            func process(data: Data) -> Result
+            func cleanup()
+        }
+        """
+    }
+    
+    private func generateExtractionChanges(_ candidate: ModularizationCandidate) -> [String] {
+        return [
+            "Extracted \(candidate.subModules.count) modules from \(candidate.systemClass)",
+            "Created interfaces for each module",
+            "Updated dependency injection",
+            "Added unit tests for new modules"
+        ]
+    }
+    
+    private func generateInterfaceMethods(_ module: ExtractedModule) -> [InterfaceMethod] {
+        return [
+            InterfaceMethod(
+                name: "initialize",
+                parameters: [],
+                returnType: "Void",
+                visibility: .public
+            ),
+            InterfaceMethod(
+                name: "process",
+                parameters: [InterfaceParameter(name: "data", type: "Data")],
+                returnType: "Result",
+                visibility: .public
+            ),
+            InterfaceMethod(
+                name: "cleanup",
+                parameters: [],
+                returnType: "Void",
+                visibility: .public
+            )
+        ]
+    }
+    
+    private func generateInterfaceProperties(_ module: ExtractedModule) -> [InterfaceProperty] {
+        return [
+            InterfaceProperty(
+                name: "isEnabled",
+                type: "Bool",
+                visibility: .public
+            ),
+            InterfaceProperty(
+                name: "configuration",
+                type: "Configuration",
+                visibility: .internal
+            )
+        ]
     }
     
     private func identifySystemClasses() async throws -> [SystemClass] {
@@ -273,19 +429,9 @@ class ModularizationManager {
         ]
     }
     
-    private func prioritizeModularization(_ candidates: [ModularizationCandidate]) async throws -> [ModularizationPriority] {
-        return candidates.map { candidate in
-            ModularizationPriority(
-                candidate: candidate,
-                priority: candidate.priority,
-                businessValue: calculateBusinessValue(candidate),
-                technicalValue: calculateTechnicalValue(candidate)
-            )
-        }.sorted { $0.priority.rawValue > $1.priority.rawValue }
-    }
-    
-    private func createModularizationRoadmap(_ priorities: [ModularizationPriority]) async throws -> ModularizationRoadmap {
-        let phases = [
+    @available(macOS 10.15, *)
+    private func createPhases(from priorities: [ModularizationPriorityInfo]) async throws -> [ModularizationPhase] {
+        return [
             ModularizationPhase(
                 name: "Phase 1: High Priority",
                 duration: "1 week",
@@ -294,171 +440,32 @@ class ModularizationManager {
             ),
             ModularizationPhase(
                 name: "Phase 2: Medium Priority",
-                duration: "1 week",
+                duration: "2 weeks",
                 candidates: priorities.filter { $0.priority == .medium }.map { $0.candidate },
-                dependencies: ["Phase 1"]
+                dependencies: []
             ),
             ModularizationPhase(
                 name: "Phase 3: Low Priority",
-                duration: "3 days",
+                duration: "3 weeks",
                 candidates: priorities.filter { $0.priority == .low }.map { $0.candidate },
-                dependencies: ["Phase 1", "Phase 2"]
-            )
-        ]
-        
-        return ModularizationRoadmap(
-            phases: phases,
-            totalDuration: "2.5 weeks",
-            totalEffort: "15-20 days"
-        )
-    }
-    
-    private func extractModule(from candidate: ModularizationCandidate) async throws -> ModuleExtractionResult {
-        print("🔧 Extracting module: \(candidate.systemClass)")
-        
-        // Simulate module extraction process
-        try await Task.sleep(nanoseconds: 2_000_000_000)
-        
-        let extractedModules = candidate.subModules.map { moduleName in
-            ExtractedModule(
-                name: moduleName,
-                originalClass: candidate.systemClass,
-                size: Int.random(in: 200...800),
-                dependencies: generateModuleDependencies(moduleName),
-                interface: generateModuleInterface(moduleName)
-            )
-        }
-        
-        return ModuleExtractionResult(
-            candidate: candidate,
-            extractedModules: extractedModules,
-            success: true,
-            extractionTime: Date(),
-            changes: generateExtractionChanges(candidate)
-        )
-    }
-    
-    private func updateDependenciesAfterModularization(_ results: [ModuleExtractionResult]) async throws {
-        print("🔗 Updating dependencies after modularization...")
-        // This would update project dependencies and references
-    }
-    
-    private func generateInterfaces(for results: [ModuleExtractionResult]) async throws -> [ModuleInterface] {
-        return results.flatMap { result in
-            result.extractedModules.map { module in
-                ModuleInterface(
-                    moduleName: module.name,
-                    protocolName: "\(module.name)Protocol",
-                    methods: generateInterfaceMethods(module),
-                    properties: generateInterfaceProperties(module)
-                )
-            }
-        }
-    }
-    
-    private func injectDependencies(for results: [ModuleExtractionResult], interfaces: [ModuleInterface]) async throws {
-        print("💉 Injecting dependencies...")
-        // This would update the original classes to use dependency injection
-    }
-    
-    private func calculateEstimatedEffort(_ roadmap: ModularizationRoadmap) -> String {
-        return roadmap.totalEffort
-    }
-    
-    private func calculateBusinessValue(_ candidate: ModularizationCandidate) -> Double {
-        return Double(candidate.subModules.count) * 0.8
-    }
-    
-    private func calculateTechnicalValue(_ candidate: ModularizationCandidate) -> Double {
-        return Double(candidate.subModules.count) * 0.9
-    }
-    
-    private func generateModuleDependencies(_ moduleName: String) -> [String] {
-        let commonDependencies = ["Foundation"]
-        
-        switch moduleName {
-        case "BehaviorDetector":
-            return commonDependencies + ["Vision", "CoreML"]
-        case "MLModelManager":
-            return commonDependencies + ["CoreML"]
-        case "AnalysisEngine":
-            return commonDependencies + ["AVFoundation"]
-        case "DataProcessor":
-            return commonDependencies + ["CoreData"]
-        default:
-            return commonDependencies
-        }
-    }
-    
-    private func generateModuleInterface(_ moduleName: String) -> String {
-        return """
-        protocol \(moduleName)Protocol {
-            func initialize()
-            func process(data: Data) -> Result
-            func cleanup()
-        }
-        """
-    }
-    
-    private func generateExtractionChanges(_ candidate: ModularizationCandidate) -> [String] {
-        return [
-            "Extracted \(candidate.subModules.count) modules from \(candidate.systemClass)",
-            "Created interfaces for each module",
-            "Updated dependency injection",
-            "Added unit tests for new modules"
-        ]
-    }
-    
-    private func generateInterfaceMethods(_ module: ExtractedModule) -> [InterfaceMethod] {
-        return [
-            InterfaceMethod(
-                name: "initialize",
-                parameters: [],
-                returnType: "Void",
-                visibility: .public
-            ),
-            InterfaceMethod(
-                name: "process",
-                parameters: [InterfaceParameter(name: "data", type: "Data")],
-                returnType: "Result",
-                visibility: .public
-            ),
-            InterfaceMethod(
-                name: "cleanup",
-                parameters: [],
-                returnType: "Void",
-                visibility: .public
-            )
-        ]
-    }
-    
-    private func generateInterfaceProperties(_ module: ExtractedModule) -> [InterfaceProperty] {
-        return [
-            InterfaceProperty(
-                name: "isEnabled",
-                type: "Bool",
-                visibility: .public
-            ),
-            InterfaceProperty(
-                name: "configuration",
-                type: "Configuration",
-                visibility: .internal
+                dependencies: []
             )
         ]
     }
 }
 
 // MARK: - Dependency Manager
-class DependencyManager {
+@available(macOS 10.15, *)
+class ArchitecturalDependencyManager {
     
-    private let spmManager = SwiftPackageManager()
-    private let dependencyGraph = DependencyGraph()
+    private let spmManager = ArchitecturalSwiftPackageManager()
+    private let dependencyGraph = DependencyGraph(name: "Main", dependencies: [], dependents: [])
     private let circularDependencyDetector = CircularDependencyDetector()
     
-    func initialize() {
+    func initialize() async {
         print("📦 Initializing dependency manager...")
         spmManager.initialize()
-        dependencyGraph.initialize()
+        // dependencyGraph.initialize() // Remove this line since DependencyGraph doesn't have initialize method
         circularDependencyDetector.initialize()
     }
     
@@ -497,9 +504,9 @@ class DependencyManager {
         )
     }
     
+    @available(macOS 10.15, *)
     private func defineDependencyGraphs() async throws -> DependencyGraphResult {
         print("📊 Defining dependency graphs...")
-        
         let graphs = [
             DependencyGraph(
                 name: "Core Module",
@@ -517,7 +524,6 @@ class DependencyManager {
                 dependents: ["Feature Modules"]
             )
         ]
-        
         return DependencyGraphResult(
             graphs: graphs,
             totalModules: graphs.count,
@@ -820,11 +826,7 @@ class DependencyInjector {
     func initialize() {}
 }
 
-class SwiftPackageManager {
-    func initialize() {}
-}
-
-class DependencyGraph {
+class ArchitecturalSwiftPackageManager {
     func initialize() {}
 }
 
@@ -949,17 +951,12 @@ enum ModularizationPriority: Int {
     case high = 3
 }
 
-struct ModularizationPriority {
-    let candidate: ModularizationCandidate
-    let priority: ModularizationPriority
-    let businessValue: Double
-    let technicalValue: Double
-}
-
 struct ModularizationRoadmap {
     let phases: [ModularizationPhase]
     let totalDuration: String
     let totalEffort: String
+    let riskAssessment: String
+    let successMetrics: [String]
 }
 
 struct ModularizationPhase {
@@ -1148,4 +1145,12 @@ struct EvolutionValidation {
     let guidelinesEstablished: Bool
     let codeReviewsPassed: Bool
     let overallSuccess: Bool
+}
+
+// Create a proper struct for modularization priority
+public struct ModularizationPriorityInfo {
+    let candidate: ModularizationCandidate
+    let priority: ModularizationPriority
+    let businessValue: Double
+    let technicalValue: Double
 } 

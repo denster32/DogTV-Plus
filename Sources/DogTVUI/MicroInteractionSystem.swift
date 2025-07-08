@@ -1,6 +1,6 @@
-import SwiftUI
+import Foundation
+// import UIKit
 import DogTVCore
-import UIKit
 
 /// Micro-interaction system for engaging user feedback
 public class MicroInteractionSystem: ObservableObject {

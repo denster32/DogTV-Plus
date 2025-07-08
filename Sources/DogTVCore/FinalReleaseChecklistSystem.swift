@@ -3,6 +3,7 @@ import SwiftUI
 
 // MARK: - Final Release Checklist System
 /// Comprehensive system for final review and release preparation
+@available(macOS 10.15, *)
 class FinalReleaseChecklistSystem {
     
     // MARK: - Properties
@@ -162,6 +163,7 @@ class FinalReleaseChecklistSystem {
 }
 
 // MARK: - Regression Tester
+@available(macOS 10.15, *)
 class RegressionTester {
     
     private let testRunner = TestRunner()
@@ -759,9 +761,7 @@ class RolloutExecutor {
 
 // MARK: - Supporting Classes
 
-class TestRunner {
-    func initialize() {}
-}
+
 
 class DeviceTester {
     func initialize() {}
@@ -819,6 +819,14 @@ struct PerformanceTestResult {
     let testsRun: Int
     let testsPassed: Int
     let benchmarks: [String: Double]
+}
+
+struct IntegrationTestResult {
+    let apiIntegration: Bool
+    let databaseIntegration: Bool
+    let thirdPartyIntegration: Bool
+    let testsRun: Int
+    let testsPassed: Int
 }
 
 struct DeviceTestResult {
@@ -963,13 +971,6 @@ struct AppStoreMetadata {
     let price: String
 }
 
-struct AppStoreAssets {
-    let appIcon: Bool
-    let screenshots: Bool
-    let previewVideo: Bool
-    let marketingGraphics: Bool
-    let allAssetsReady: Bool
-}
 
 struct AppStoreSubmission {
     let buildNumber: String
@@ -1134,11 +1135,11 @@ struct ChecklistStatus {
 
 struct ChecklistItem {
     let name: String
-    let status: ItemStatus
+    let status: FinalReleaseItemStatus
     let completedDate: Date?
     let estimatedDuration: String?
     
-    init(name: String, status: ItemStatus, completedDate: Date? = nil, estimatedDuration: String? = nil) {
+    init(name: String, status: FinalReleaseItemStatus, completedDate: Date? = nil, estimatedDuration: String? = nil) {
         self.name = name
         self.status = status
         self.completedDate = completedDate
@@ -1146,9 +1147,10 @@ struct ChecklistItem {
     }
 }
 
-enum ItemStatus {
+enum FinalReleaseItemStatus {
     case pending
     case inProgress
     case completed
     case failed
+    case skipped
 } 

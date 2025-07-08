@@ -37,6 +37,7 @@ import Accelerate
  * - Privacy-preserving ML
  * - Explainable AI
  */
+@available(macOS 10.15, *)
 public class AIRecommendationEngine: ObservableObject {
     
     // MARK: - Published Properties
@@ -877,8 +878,8 @@ public class AIRecommendationEngine: ObservableObject {
         // Simulate running A/B test
         return ABTestResult(
             testId: testConfig.testId,
-            variantA: ABTestVariant(name: "Control", openRate: 0.05, users: 1000),
-            variantB: ABTestVariant(name: "Treatment", openRate: 0.07, users: 1000),
+            variantA: AIABTestVariant(name: "Control", openRate: 0.05, users: 1000),
+            variantB: AIABTestVariant(name: "Treatment", openRate: 0.07, users: 1000),
             confidence: 0.95,
             isSignificant: true,
             winner: "Treatment"
@@ -903,6 +904,7 @@ public class AIRecommendationEngine: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func updateRecommendationQuality() {
         Task {
             let quality = await evaluateRecommendationQuality()
@@ -924,13 +926,29 @@ public class AIRecommendationEngine: ObservableObject {
     
     private func getLearningProgress() async -> LearningProgress {
         // Simulate getting learning progress
-        return LearningProgress()
+        return LearningProgress(
+            modelPerformance: ModelPerformance(),
+            trainingMetrics: TrainingMetrics(),
+            adaptationRate: 0.85,
+            accuracyImprovement: 0.1,
+            lastTraining: Date(),
+            nextTraining: Date()
+        )
     }
     
     private func evaluateRecommendationQuality() async -> Float {
         // Simulate evaluating recommendation quality
         return Float.random(in: 0.7...0.95)
     }
+}
+
+struct LearningProgress: Codable {
+    let modelPerformance: ModelPerformance
+    let trainingMetrics: TrainingMetrics
+    let adaptationRate: Float
+    let accuracyImprovement: Float
+    let lastTraining: Date
+    let nextTraining: Date
 }
 
 // MARK: - Supporting Classes
@@ -1171,15 +1189,15 @@ public struct RecommendationABTest: Codable {
 
 public struct ABTestResult: Codable {
     let testId: String
-    let variantA: ABTestVariant
-    let variantB: ABTestVariant
+    let variantA: AIABTestVariant
+    let variantB: AIABTestVariant
     let confidence: Float
     let isSignificant: Bool
     let winner: String?
 }
 
-public struct ABTestVariant: Codable {
+public struct AIABTestVariant: Codable {
     let name: String
     let openRate: Float
-    let users: Int
+    let clickRate: Float
 } 

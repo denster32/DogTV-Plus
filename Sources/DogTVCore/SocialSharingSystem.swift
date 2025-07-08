@@ -27,6 +27,7 @@ import Combine
  * - YouTube video sharing
  * - In-app community
  */
+@available(macOS 10.15, *)
 public class SocialSharingSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -533,8 +534,8 @@ class SocialPrivacyManager {
 
 public struct SocialConfiguration {
     var platforms: [SocialPlatform] = []
-    var privacySettings: [String: Any] = [:]
-    var sharingPreferences: [String: Any] = [:]
+    var privacySettings: [String: String] = [:]
+    var sharingPreferences: [String: String] = [:]
     var analyticsEnabled: Bool = true
 }
 
@@ -555,7 +556,7 @@ public struct BehaviorData {
     var type: String
     var confidence: Float
     var timestamp: Date
-    var metadata: [String: Any]
+    var metadata: [String: String]
 }
 
 public struct ModerationResult {
@@ -575,4 +576,74 @@ public struct CommunityInsights {
     let activeDiscussions: [Discussion]
     let engagementRate: Float
     let topContributors: [String]
+}
+
+public struct UserGeneratedContent: Identifiable, Codable {
+    public let id: String
+    let type: ContentType
+    let title: String
+    let description: String
+    let content: String
+    let createdAt: Date
+    let engagement: ContentEngagement
+    
+    enum ContentType: String, Codable {
+        case behaviorInsight = "BehaviorInsight"
+        case trainingTip = "TrainingTip"
+        case dogStory = "DogStory"
+        case photo = "Photo"
+        case video = "Video"
+    }
+}
+
+public struct SharedContent: Identifiable, Codable {
+    public let id: String
+    let originalContent: UserGeneratedContent
+    let platform: SocialPlatform
+    let sharedAt: Date
+    let engagement: ContentEngagement
+}
+
+public enum SocialPlatform: String, CaseIterable, Codable {
+    case instagram = "Instagram"
+    case facebook = "Facebook"
+    case twitter = "Twitter"
+    case tiktok = "TikTok"
+    case youtube = "YouTube"
+    case reddit = "Reddit"
+}
+
+public struct Discussion: Identifiable, Codable {
+    public let id: UUID
+    let title: String
+    let content: String
+    let author: String
+    let createdAt: Date
+    let replies: [Reply]
+    let tags: [String]
+}
+
+public struct Reply: Identifiable, Codable {
+    public let id: UUID
+    let content: String
+    let author: String
+    let createdAt: Date
+    let parentId: UUID?
+}
+
+public struct ContentEngagement: Codable {
+    let views: Int
+    let likes: Int
+    let shares: Int
+    let comments: Int
+    let engagementRate: Double
+}
+
+public struct EngagementMetrics: Codable {
+    let totalViews: Int = 0
+    let totalLikes: Int = 0
+    let totalShares: Int = 0
+    let totalComments: Int = 0
+    let averageEngagementRate: Double = 0.0
+    let topPerformingContent: [String] = []
 } 

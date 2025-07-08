@@ -29,7 +29,8 @@ import Combine
  * - Battery Optimization Techniques, 2023: Power consumption reduction
  * - Performance Monitoring, 2023: Real-time optimization strategies
  */
-class PerformanceOptimizationSystem: ObservableObject {
+@available(macOS 10.15, *)
+public class PerformanceOptimizationSystem: ObservableObject {
     
     // MARK: - Published Properties
     @Published var currentPerformance: PerformanceMetrics = PerformanceMetrics()
@@ -42,7 +43,7 @@ class PerformanceOptimizationSystem: ObservableObject {
     private let gpuManager = GPUManager()
     private let memoryManager = MemoryManager()
     private let batteryOptimizer = BatteryOptimizer()
-    private let performanceMonitor = PerformanceMonitor()
+    private let performanceMonitor = OptimizationPerformanceMonitor()
     private let optimizationEngine = OptimizationEngine()
     
     // MARK: - Metal Components
@@ -353,7 +354,7 @@ class PerformanceOptimizationSystem: ObservableObject {
      * Collects and updates performance data
      */
     private func updatePerformanceMetrics() async {
-        let metrics = await performanceMonitor.getPerformanceMetrics()
+        let metrics = await performanceMonitor.getMetrics()
         
         await MainActor.run {
             currentPerformance.cpuUsage = metrics.cpuUsage
@@ -482,6 +483,7 @@ class GPUManager {
     }
 }
 
+@available(macOS 10.15, *)
 class MemoryManager {
     func configure() async {
         // Configure memory manager
@@ -508,6 +510,7 @@ class MemoryManager {
     }
 }
 
+@available(macOS 10.15, *)
 class BatteryOptimizer {
     func configure() async {
         // Configure battery optimizer
@@ -530,7 +533,8 @@ class BatteryOptimizer {
     }
 }
 
-class PerformanceMonitor {
+@available(macOS 10.15, *)
+class OptimizationPerformanceMonitor {
     func configure() async {
         // Configure performance monitor
     }
@@ -539,8 +543,19 @@ class PerformanceMonitor {
         // Start performance monitoring
     }
     
-    func getPerformanceMetrics() async -> PerformanceData {
+    func getMetrics() async -> PerformanceData {
+        // Simulate getting performance metrics
         return PerformanceData()
+    }
+    
+    func getMemoryData() async -> MemoryData {
+        // Simulate getting memory data
+        return MemoryData()
+    }
+    
+    func getBatteryData() async -> BatteryData {
+        // Simulate getting battery data
+        return BatteryData()
     }
 }
 
@@ -569,6 +584,7 @@ struct GPUData {
     var pipelineEfficiency: Float = 0.0
 }
 
+@available(macOS 10.15, *)
 struct MemoryData {
     var totalMemory: UInt64 = 0
     var usedMemory: UInt64 = 0
@@ -578,6 +594,7 @@ struct MemoryData {
     var fragmentation: Float = 0.0
 }
 
+@available(macOS 10.15, *)
 struct BatteryData {
     var level: Float = 0.0
     var isCharging: Bool = false
@@ -587,6 +604,7 @@ struct BatteryData {
     var optimizationLevel: PerformanceOptimizationSystem.BatteryOptimizationLevel = .balanced
 }
 
+@available(macOS 10.15, *)
 struct PerformanceData {
     var cpuUsage: Float = 0.0
     var gpuUsage: Float = 0.0
@@ -597,5 +615,4 @@ struct PerformanceData {
     var optimizationScore: Float = 0.0
     var bottlenecks: [String] = []
     var recommendations: [String] = []
-} 
 } 

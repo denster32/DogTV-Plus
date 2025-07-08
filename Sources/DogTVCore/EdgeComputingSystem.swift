@@ -36,6 +36,7 @@ import Network
  * - Edge-to-cloud data synchronization
  * - Edge resource management and optimization
  */
+@available(macOS 10.15, *)
 public class EdgeComputingSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -58,7 +59,7 @@ public class EdgeComputingSystem: ObservableObject {
     // MARK: - Configuration
     private var edgeConfig: EdgeConfiguration
     private var iotConfig: IoTConfiguration
-    private var processingConfig: ProcessingConfiguration
+    private var processingConfig: EdgeProcessingConfiguration
     
     // MARK: - Data Structures
     
@@ -155,7 +156,7 @@ public class EdgeComputingSystem: ObservableObject {
     }
     
     public struct ConnectivityInfo: Codable {
-        var protocol: ConnectivityProtocol
+        var `protocol`: ConnectivityProtocol
         var signalStrength: Float
         var bandwidth: Float
         var latency: TimeInterval
@@ -324,6 +325,18 @@ public class EdgeComputingSystem: ObservableObject {
         var networkBandwidth: Float
         var gpuAvailable: Bool
         var gpuMemory: Float?
+        
+        public init(totalCPU: Float = 0.0, availableCPU: Float = 0.0, totalMemory: Float = 0.0, availableMemory: Float = 0.0, totalStorage: Float = 0.0, availableStorage: Float = 0.0, networkBandwidth: Float = 0.0, gpuAvailable: Bool = false, gpuMemory: Float? = nil) {
+            self.totalCPU = totalCPU
+            self.availableCPU = availableCPU
+            self.totalMemory = totalMemory
+            self.availableMemory = availableMemory
+            self.totalStorage = totalStorage
+            self.availableStorage = availableStorage
+            self.networkBandwidth = networkBandwidth
+            self.gpuAvailable = gpuAvailable
+            self.gpuMemory = gpuMemory
+        }
     }
     
     public struct QueuedTask: Codable, Identifiable {
@@ -428,10 +441,10 @@ public class EdgeComputingSystem: ObservableObject {
     }
     
     public struct EdgeSecurity: Codable {
-        var securityStatus: SecurityStatus = SecurityStatus()
-        var authentication: AuthenticationInfo = AuthenticationInfo()
-        var encryption: EncryptionInfo = EncryptionInfo()
-        var accessControl: AccessControl = AccessControl()
+        var securityStatus: SecurityStatus = SecurityStatus(overallStatus: .secure, lastScan: Date(), nextScan: Date().addingTimeInterval(86400))
+        var authentication: AuthenticationInfo = AuthenticationInfo(method: .biometric, isEnabled: true, lastUpdate: Date())
+        var encryption: EncryptionInfo = EncryptionInfo(isEnabled: true, algorithm: .aes, keyRotation: .monthly)
+        var accessControl: AccessControl = AccessControl(lastUpdate: Date())
         var securityEvents: [SecurityEvent] = []
         var lastUpdated: Date = Date()
     }
@@ -442,6 +455,14 @@ public class EdgeComputingSystem: ObservableObject {
         var vulnerabilities: [Vulnerability] = []
         var lastScan: Date
         var nextScan: Date
+        
+        public init(overallStatus: SecurityLevel, threats: [SecurityThreat] = [], vulnerabilities: [Vulnerability] = [], lastScan: Date, nextScan: Date) {
+            self.overallStatus = overallStatus
+            self.threats = threats
+            self.vulnerabilities = vulnerabilities
+            self.lastScan = lastScan
+            self.nextScan = nextScan
+        }
     }
     
     public enum SecurityLevel: String, CaseIterable, Codable {
@@ -493,6 +514,13 @@ public class EdgeComputingSystem: ObservableObject {
         var isEnabled: Bool
         var lastUpdate: Date
         var policies: [AuthPolicy]
+        
+        public init(method: AuthenticationMethod, isEnabled: Bool, lastUpdate: Date, policies: [AuthPolicy] = []) {
+            self.method = method
+            self.isEnabled = isEnabled
+            self.lastUpdate = lastUpdate
+            self.policies = policies
+        }
     }
     
     public enum AuthenticationMethod: String, CaseIterable, Codable {
@@ -512,11 +540,19 @@ public class EdgeComputingSystem: ObservableObject {
     }
     
     public struct EncryptionInfo: Codable {
-        var algorithm: EncryptionAlgorithm
-        var keySize: Int
         var isEnabled: Bool
-        var lastKeyRotation: Date
-        var nextKeyRotation: Date
+        var algorithm: EncryptionAlgorithm
+        var keyRotation: KeyRotationPolicy
+        var lastRotation: Date
+        var nextRotation: Date
+        
+        public init(isEnabled: Bool, algorithm: EncryptionAlgorithm, keyRotation: KeyRotationPolicy, lastRotation: Date = Date(), nextRotation: Date = Date().addingTimeInterval(2592000)) {
+            self.isEnabled = isEnabled
+            self.algorithm = algorithm
+            self.keyRotation = keyRotation
+            self.lastRotation = lastRotation
+            self.nextRotation = nextRotation
+        }
     }
     
     public enum EncryptionAlgorithm: String, CaseIterable, Codable {
@@ -527,11 +563,26 @@ public class EdgeComputingSystem: ObservableObject {
         case quantum = "Quantum-Safe"
     }
     
+    public enum KeyRotationPolicy: String, CaseIterable, Codable {
+        case daily = "Daily"
+        case weekly = "Weekly"
+        case monthly = "Monthly"
+        case quarterly = "Quarterly"
+        case yearly = "Yearly"
+    }
+    
     public struct AccessControl: Codable {
         var policies: [AccessPolicy] = []
         var roles: [UserRole] = []
         var permissions: [Permission] = []
         var lastUpdate: Date
+        
+        public init(policies: [AccessPolicy] = [], roles: [UserRole] = [], permissions: [Permission] = [], lastUpdate: Date) {
+            self.policies = policies
+            self.roles = roles
+            self.permissions = permissions
+            self.lastUpdate = lastUpdate
+        }
     }
     
     public struct AccessPolicy: Codable, Identifiable {
@@ -584,7 +635,7 @@ public class EdgeComputingSystem: ObservableObject {
     public init() {
         self.edgeConfig = EdgeConfiguration()
         self.iotConfig = IoTConfiguration()
-        self.processingConfig = ProcessingConfiguration()
+        self.processingConfig = EdgeProcessingConfiguration()
         
         setupEdgeComputingSystem()
         print("EdgeComputingSystem initialized")
@@ -839,9 +890,9 @@ class EdgeManager {
         )
     }
     
-    func getEdgeSecurity() async -> EdgeSecurity {
+    func getEdgeSecurity() async -> EdgeComputingSystem.EdgeSecurity {
         // Simulate getting edge security
-        return EdgeSecurity()
+        return EdgeComputingSystem.EdgeSecurity()
     }
 }
 
@@ -878,7 +929,7 @@ class IoTManager {
 }
 
 class EdgeProcessor {
-    func configure(_ config: ProcessingConfiguration) {
+    func configure(_ config: EdgeProcessingConfiguration) {
         // Configure edge processor
     }
     
@@ -971,18 +1022,73 @@ public struct EdgeConfiguration {
     var memoryCapacity: Float = 8.0
     var storageCapacity: Float = 100.0
     var networkBandwidth: Float = 100.0
-    var securityLevel: SecurityLevel = .secure
+    var securityLevel: EdgeSecurityLevel = .secure
+}
+
+// Add missing type definitions
+enum EdgeStatus: String, Codable {
+    case online = "online"
+    case offline = "offline"
+    case maintenance = "maintenance"
+    case error = "error"
+}
+
+struct IoTDevice: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let type: String
+    let status: EdgeStatus
+    let lastSeen: Date
+}
+
+struct IoTDevices: Codable {
+    let devices: [IoTDevice]
+    let totalDevices: Int
+    let onlineDevices: Int
+}
+
+struct DeviceMetric: Codable {
+    let deviceId: UUID
+    let timestamp: Date
+    let cpuUsage: Float
+    let memoryUsage: Float
+    let networkUsage: Float
+}
+
+struct EdgeTask: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let type: String
+    let priority: Int
+    let status: EdgeStatus
+    let createdAt: Date
+}
+
+struct QueuedTask: Codable, Identifiable {
+    let id = UUID()
+    let task: EdgeTask
+    let priority: Int
+    let queuedAt: Date
+}
+
+
+
+enum ConnectivityProtocol: String, Codable {
+    case wifi = "wifi"
+    case bluetooth = "bluetooth"
+    case ethernet = "ethernet"
+    case cellular = "cellular"
 }
 
 public struct IoTConfiguration {
     var supportedProtocols: [ConnectivityProtocol] = [.wifi, .bluetooth]
     var maxConnections: Int = 50
     var autoDiscovery: Bool = true
-    var securityLevel: SecurityLevel = .secure
+    var securityLevel: EdgeSecurityLevel = .secure
     var updateInterval: TimeInterval = 60.0
 }
 
-public struct ProcessingConfiguration {
+public struct EdgeProcessingConfiguration {
     var maxConcurrentTasks: Int = 10
     var taskTimeout: TimeInterval = 300.0
     var priorityLevels: Int = 4
@@ -990,14 +1096,14 @@ public struct ProcessingConfiguration {
 }
 
 public enum ResourceAllocationStrategy: String, CaseIterable, Codable {
-    case static = "Static"
+    case `static` = "Static"
     case dynamic = "Dynamic"
     case adaptive = "Adaptive"
     case predictive = "Predictive"
 }
 
 public struct AIInput: Codable {
-    let data: [String: Any]
+    let data: [String: String]
     let model: String
     let parameters: [String: String]
 }
@@ -1015,4 +1121,12 @@ public struct EdgeApplication: Codable {
     let type: String
     let resources: ResourceRequirements
     let dependencies: [String]
+} 
+
+enum EdgeSecurityLevel: String, Codable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case secure = "secure"
+    case standard = "standard"
 } 

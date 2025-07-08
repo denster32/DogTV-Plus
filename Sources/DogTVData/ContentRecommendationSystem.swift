@@ -53,7 +53,7 @@ public class ContentRecommendationSystem: ObservableObject {
     
     public struct ContentRecommendation: Codable, Identifiable {
         public let id = UUID()
-        var content: VideoContent
+        var content: ProceduralScene
         var score: Float
         var reason: RecommendationReason
         var confidence: Float
@@ -62,17 +62,7 @@ public class ContentRecommendationSystem: ObservableObject {
         var userFeedback: UserFeedback?
     }
     
-    public struct VideoContent: Codable, Identifiable {
-        public let id = UUID()
-        var title: String
-        var description: String
-        var category: ContentCategory
-        var duration: TimeInterval
-        var tags: [String]
-        var metadata: ContentMetadata
-        var url: URL
-        var thumbnailURL: URL?
-    }
+    // Using ProceduralScene from DogTVData instead of VideoContent
     
     public enum ContentCategory: String, CaseIterable, Codable {
         case relaxation = "Relaxation"
@@ -236,7 +226,7 @@ public class ContentRecommendationSystem: ObservableObject {
     
     public struct ContentHistory: Codable, Identifiable {
         public let id = UUID()
-        var content: VideoContent
+        var content: ProceduralScene
         var watchCount: Int
         var totalWatchTime: TimeInterval
         var averageCompletionRate: Float
@@ -496,18 +486,36 @@ class RecommendationEngine {
         // Simulate generating recommendations
         try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
         
+        // Import ProceduralScene from DogTVData
+        let sampleScene = ProceduralScene(
+            type: .relaxation,
+            title: "Calming Ocean Waves",
+            description: "Procedurally generated ocean waves for relaxation",
+            duration: 300,
+            engagementLevel: 0.8,
+            breedCompatibility: [.goldenRetriever, .labrador],
+            visualParameters: VisualParameters(
+                colorPalette: ["#4A90E2", "#F5A623"],
+                motionIntensity: 0.3,
+                contrastLevel: 1.2,
+                brightness: 0.7,
+                saturation: 0.8,
+                animationSpeed: 0.4,
+                complexity: 0.3
+            ),
+            audioParameters: AudioParameters(
+                frequencyRange: .low,
+                volume: 0.5,
+                spatialAudio: false,
+                ambientSounds: ["gentle_waves"],
+                therapeuticFrequencies: [40.0, 60.0]
+            ),
+            behaviorTriggers: []
+        )
+        
         return [
             ContentRecommendation(
-                content: VideoContent(
-                    title: "Relaxing Nature Sounds",
-                    description: "Calming nature sounds for your dog",
-                    category: .relaxation,
-                    duration: 300,
-                    tags: ["nature", "calming", "relaxation"],
-                    metadata: ContentMetadata(),
-                    url: URL(string: "https://example.com/video1")!,
-                    thumbnailURL: nil
-                ),
+                content: sampleScene,
                 score: 0.95,
                 reason: .userHistory,
                 confidence: 0.9,

@@ -35,6 +35,9 @@ import Combine
  * - Live event notifications
  * - Personalized content alerts
  */
+// MARK: - Notification System
+/// Comprehensive notification management for DogTV+
+@available(macOS 10.15, *)
 public class NotificationSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -57,67 +60,50 @@ public class NotificationSystem: ObservableObject {
     // MARK: - Configuration
     private var notificationConfig: NotificationConfiguration
     private var personalizationConfig: PersonalizationConfiguration
-    private var analyticsConfig: AnalyticsConfiguration
+    private var analyticsConfig: NotificationAnalyticsConfiguration
     
     // MARK: - Data Structures
     
     public struct NotificationCenter: Codable {
-        var activeNotifications: [NotificationItem] = []
-        var pendingNotifications: [NotificationItem] = []
-        var notificationQueue: [NotificationItem] = []
+        var notifications: [NotificationItem] = []
+        var unreadCount: Int = 0
         var lastUpdated: Date = Date()
     }
     
     public struct NotificationItem: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var title: String
         var message: String
         var type: NotificationType
-        var category: NotificationCategory
         var priority: NotificationPriority
-        var targetAudience: [String]
-        var deliveryChannels: [DeliveryChannel]
-        var scheduledTime: Date?
-        var expirationTime: Date?
-        var isInteractive: Bool
-        var actionButtons: [NotificationAction]
-        var richMedia: RichMediaContent?
-        var metadata: NotificationMetadata
-        var status: NotificationStatus
-        var createdAt: Date
-        var sentAt: Date?
-        var deliveredAt: Date?
-        var openedAt: Date?
+        var scheduledDate: Date?
+        var isRead: Bool = false
+        var isDelivered: Bool = false
+        var deliveryChannels: [DeliveryChannel] = []
+        var metadata: [String: String] = [:]
+        var status: NotificationStatus = .draft
     }
     
     public enum NotificationType: String, CaseIterable, Codable {
-        case contentRecommendation = "Content Recommendation"
-        case systemUpdate = "System Update"
-        case userEngagement = "User Engagement"
-        case socialInteraction = "Social Interaction"
+        case info = "Info"
+        case warning = "Warning"
+        case error = "Error"
+        case success = "Success"
         case reminder = "Reminder"
-        case achievement = "Achievement"
-        case liveEvent = "Live Event"
-        case personalizedContent = "Personalized Content"
-        case marketing = "Marketing"
-        case security = "Security"
-        case maintenance = "Maintenance"
-        
-        var icon: String {
-            switch self {
-            case .contentRecommendation: return "tv"
-            case .systemUpdate: return "gear"
-            case .userEngagement: return "heart"
-            case .socialInteraction: return "person.2"
-            case .reminder: return "bell"
-            case .achievement: return "trophy"
-            case .liveEvent: return "antenna.radiowaves.left.and.right"
-            case .personalizedContent: return "person.crop.circle"
-            case .marketing: return "megaphone"
-            case .security: return "lock.shield"
-            case .maintenance: return "wrench.and.screwdriver"
-            }
-        }
+    }
+    
+    public enum NotificationPriority: String, CaseIterable, Codable {
+        case low = "Low"
+        case normal = "Normal"
+        case high = "High"
+        case urgent = "Urgent"
+    }
+    
+    public enum DeliveryChannel: String, CaseIterable, Codable {
+        case push = "Push"
+        case inApp = "In-App"
+        case email = "Email"
+        case sms = "SMS"
     }
     
     public enum NotificationCategory: String, CaseIterable, Codable {
@@ -131,35 +117,8 @@ public class NotificationSystem: ObservableObject {
         case maintenance = "Maintenance"
     }
     
-    public enum NotificationPriority: String, CaseIterable, Codable {
-        case low = "Low"
-        case normal = "Normal"
-        case high = "High"
-        case urgent = "Urgent"
-        case critical = "Critical"
-        
-        var color: String {
-            switch self {
-            case .low: return "gray"
-            case .normal: return "blue"
-            case .high: return "orange"
-            case .urgent: return "red"
-            case .critical: return "purple"
-            }
-        }
-    }
-    
-    public enum DeliveryChannel: String, CaseIterable, Codable {
-        case push = "Push"
-        case inApp = "In-App"
-        case email = "Email"
-        case sms = "SMS"
-        case webhook = "Webhook"
-        case social = "Social"
-    }
-    
     public struct NotificationAction: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var title: String
         var actionType: ActionType
         var url: String?
@@ -229,7 +188,6 @@ public class NotificationSystem: ObservableObject {
         case delivered = "Delivered"
         case opened = "Opened"
         case failed = "Failed"
-        case cancelled = "Cancelled"
     }
     
     public struct NotificationPreferences: Codable {
@@ -283,69 +241,48 @@ public class NotificationSystem: ObservableObject {
     }
     
     public struct DeliveryMetrics: Codable {
-        var totalSent: Int
-        var totalDelivered: Int
-        var deliveryRate: Float
-        var failedDeliveries: Int
-        var averageDeliveryTime: TimeInterval
-        var channelPerformance: [DeliveryChannel: ChannelMetrics]
-    }
-    
-    public struct ChannelMetrics: Codable {
-        var sent: Int
-        var delivered: Int
-        var failed: Int
-        var deliveryRate: Float
-        var averageDeliveryTime: TimeInterval
+        var totalSent: Int = 0
+        var delivered: Int = 0
+        var failed: Int = 0
+        var deliveryRate: Float = 0.0
     }
     
     public struct EngagementMetrics: Codable {
-        var totalOpened: Int
-        var openRate: Float
-        var averageOpenTime: TimeInterval
-        var actionClicks: Int
-        var actionRate: Float
-        var dismissRate: Float
+        var opened: Int = 0
+        var clicked: Int = 0
+        var dismissed: Int = 0
+        var engagementRate: Float = 0.0
     }
     
     public struct PerformanceMetrics: Codable {
-        var responseTime: TimeInterval
-        var errorRate: Float
-        var systemLoad: Float
-        var memoryUsage: Float
-        var batteryImpact: Float
+        var averageDeliveryTime: TimeInterval = 0.0
+        var openRate: Float = 0.0
+        var clickRate: Float = 0.0
+        var conversionRate: Float = 0.0
     }
     
     public struct UserBehavior: Codable {
-        var preferredChannels: [DeliveryChannel: Float]
-        var preferredCategories: [NotificationCategory: Float]
-        var preferredTimes: [Int: Float] // Hour of day
-        var interactionPatterns: [String: Int]
-        var optOutRates: [NotificationCategory: Float]
+        var preferredChannels: [DeliveryChannel] = []
+        var preferredTimes: [Date] = []
+        var optOutCategories: [String] = []
+        var engagementHistory: [String] = []
     }
     
     public struct NotificationTemplates: Codable {
-        var contentRecommendationTemplates: [NotificationTemplate] = []
-        var systemUpdateTemplates: [NotificationTemplate] = []
-        var userEngagementTemplates: [NotificationTemplate] = []
-        var achievementTemplates: [NotificationTemplate] = []
-        var reminderTemplates: [NotificationTemplate] = []
-        var marketingTemplates: [NotificationTemplate] = []
+        var templates: [NotificationTemplate] = []
+        var categories: [String] = []
         var lastUpdated: Date = Date()
     }
     
     public struct NotificationTemplate: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
+        var title: String
+        var message: String
         var type: NotificationType
-        var titleTemplate: String
-        var messageTemplate: String
-        var variables: [String]
-        var defaultPriority: NotificationPriority
-        var defaultChannels: [DeliveryChannel]
-        var isActive: Bool
-        var createdAt: Date
-        var updatedAt: Date
+        var priority: NotificationPriority
+        var variables: [String] = []
+        var isActive: Bool = true
     }
     
     // MARK: - Initialization
@@ -353,7 +290,7 @@ public class NotificationSystem: ObservableObject {
     public init() {
         self.notificationConfig = NotificationConfiguration()
         self.personalizationConfig = PersonalizationConfiguration()
-        self.analyticsConfig = AnalyticsConfiguration()
+        self.analyticsConfig = NotificationAnalyticsConfiguration()
         
         setupNotificationSystem()
         print("NotificationSystem initialized")
@@ -362,47 +299,52 @@ public class NotificationSystem: ObservableObject {
     // MARK: - Public Methods
     
     /// Send notification
-    public func sendNotification(_ notification: NotificationItem) async throws {
+    @available(macOS 10.15, *)
+    public func sendNotification(_ notification: NotificationSystem.NotificationItem) async throws {
         // Personalize notification
         let personalizedNotification = await notificationPersonalizer.personalizeNotification(notification)
         
         // Schedule notification
         try await notificationScheduler.scheduleNotification(personalizedNotification)
         
-        // Update notification center
-        await updateNotificationCenter()
+        // Send through appropriate channels
+        try await sendThroughChannels(personalizedNotification)
         
-        print("Notification scheduled: \(notification.title)")
+        // Update analytics
+        await notificationAnalyticsEngine.trackNotificationSent(notification.id.uuidString)
+        
+        print("Notification sent: \(notification.title)")
     }
     
     /// Send immediate notification
-    public func sendImmediateNotification(_ notification: NotificationItem) async throws {
+    @available(macOS 10.15, *)
+    public func sendImmediateNotification(_ notification: NotificationSystem.NotificationItem) async throws {
         // Personalize notification
         let personalizedNotification = await notificationPersonalizer.personalizeNotification(notification)
         
         // Send through all channels
-        for channel in personalizedNotification.deliveryChannels {
-            try await sendNotificationToChannel(personalizedNotification, channel: channel)
-        }
+        try await sendThroughChannels(personalizedNotification)
         
         // Update analytics
-        await updateNotificationAnalytics()
+        await notificationAnalyticsEngine.trackNotificationSent(notification.id.uuidString)
         
         print("Immediate notification sent: \(notification.title)")
     }
     
     /// Schedule notification
-    public func scheduleNotification(_ notification: NotificationItem, at date: Date) async throws {
+    @available(macOS 10.15, *)
+    public func scheduleNotification(_ notification: NotificationSystem.NotificationItem, at date: Date) async throws {
         var scheduledNotification = notification
-        scheduledNotification.scheduledTime = date
         scheduledNotification.status = .scheduled
         
         try await notificationScheduler.scheduleNotification(scheduledNotification)
         
         // Update notification center
-        await updateNotificationCenter()
+        await MainActor.run {
+            notificationHistory.append(scheduledNotification)
+        }
         
-        print("Notification scheduled for: \(date)")
+        print("Notification scheduled: \(notification.title) at \(date)")
     }
     
     /// Cancel notification
@@ -441,6 +383,7 @@ public class NotificationSystem: ObservableObject {
     }
     
     /// Get notification analytics
+    @available(macOS 10.15, *)
     public func getNotificationAnalytics() async -> NotificationAnalytics {
         let analytics = await notificationAnalyticsEngine.getAnalytics()
         
@@ -454,6 +397,7 @@ public class NotificationSystem: ObservableObject {
     }
     
     /// Create notification template
+    @available(macOS 10.15, *)
     public func createNotificationTemplate(_ template: NotificationTemplate) async throws {
         try await notificationTemplateEngine.createTemplate(template)
         
@@ -464,8 +408,13 @@ public class NotificationSystem: ObservableObject {
     }
     
     /// Send notification using template
-    public func sendNotificationWithTemplate(_ templateName: String, variables: [String: String]) async throws {
-        let template = await notificationTemplateEngine.getTemplate(templateName)
+    @available(macOS 10.15, *)
+    public func sendNotificationFromTemplate(_ templateName: String, variables: [String: String]) async throws {
+        let template = notificationTemplates.templates.first { $0.name == templateName }
+        guard let template = template else {
+            throw NotificationError.templateNotFound(templateName)
+        }
+        
         let notification = await notificationTemplateEngine.createNotificationFromTemplate(template, variables: variables)
         
         try await sendNotification(notification)
@@ -474,11 +423,14 @@ public class NotificationSystem: ObservableObject {
     }
     
     /// A/B test notifications
+    @available(macOS 10.15, *)
     public func runNotificationABTest(_ testConfig: NotificationABTest) async -> ABTestResult {
         let result = await notificationAnalyticsEngine.runABTest(testConfig)
         
-        print("Notification A/B test completed")
+        // Update analytics
+        await updateNotificationAnalytics()
         
+        print("A/B test completed: \(testConfig.testId)")
         return result
     }
     
@@ -502,6 +454,7 @@ public class NotificationSystem: ObservableObject {
     }
     
     /// Track notification action
+    @available(macOS 10.15, *)
     public func trackNotificationAction(_ notificationId: String, action: NotificationAction) async {
         await notificationAnalyticsEngine.trackNotificationAction(notificationId, action: action)
         
@@ -509,11 +462,11 @@ public class NotificationSystem: ObservableObject {
     }
     
     /// Export notification data
-    public func exportNotificationData(_ format: ExportFormat, dateRange: DateRange) async throws -> Data {
+    @available(macOS 10.15, *)
+    public func exportNotificationData(_ format: NotificationExportFormat, dateRange: DateRange) async throws -> Data {
         let data = try await notificationAnalyticsEngine.exportData(format: format, dateRange: dateRange)
         
-        print("Notification data exported in \(format.rawValue) format")
-        
+        print("Notification data exported: \(format.rawValue)")
         return data
     }
     
@@ -540,7 +493,9 @@ public class NotificationSystem: ObservableObject {
     private func setupNotificationMonitoring() {
         // Notification center updates
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.updateNotificationCenter()
+            Task {
+                await self?.updateNotificationCenter()
+            }
         }
         
         // Analytics updates
@@ -564,6 +519,14 @@ public class NotificationSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
+    private func sendThroughChannels(_ notification: NotificationItem) async throws {
+        for channel in notification.deliveryChannels {
+            try await sendNotificationToChannel(notification, channel: channel)
+        }
+    }
+    
+    @available(macOS 10.15, *)
     private func sendNotificationToChannel(_ notification: NotificationItem, channel: DeliveryChannel) async throws {
         switch channel {
         case .push:
@@ -574,31 +537,19 @@ public class NotificationSystem: ObservableObject {
             try await emailNotificationManager.sendNotification(notification)
         case .sms:
             try await smsNotificationManager.sendNotification(notification)
-        case .webhook:
-            try await sendWebhookNotification(notification)
-        case .social:
-            try await sendSocialNotification(notification)
         }
     }
     
-    private func sendWebhookNotification(_ notification: NotificationItem) async throws {
-        // Simulate webhook notification
-    }
-    
-    private func sendSocialNotification(_ notification: NotificationItem) async throws {
-        // Simulate social notification
-    }
-    
-    private func updateNotificationCenter() {
-        Task {
-            let center = await notificationScheduler.getNotificationCenter()
-            await MainActor.run {
-                notificationCenter = center
-            }
+    @available(macOS 10.15, *)
+    private func updateNotificationCenter() async {
+        // Update notification center state
+        await MainActor.run {
+            // Update any UI-related notification state
         }
     }
     
-    private func updateNotificationAnalytics() {
+    @available(macOS 10.15, *)
+    private func updateNotificationAnalytics() async {
         Task {
             let analytics = await notificationAnalyticsEngine.getAnalytics()
             await MainActor.run {
@@ -607,12 +558,11 @@ public class NotificationSystem: ObservableObject {
         }
     }
     
-    private func updateNotificationHistory() {
-        Task {
-            let history = await loadNotificationHistory()
-            await MainActor.run {
-                notificationHistory = history
-            }
+    @available(macOS 10.15, *)
+    private func updateNotificationHistory() async {
+        // Update notification history
+        await MainActor.run {
+            // Update history if needed
         }
     }
     
@@ -640,6 +590,7 @@ class PushNotificationManager {
         // Configure push notification manager
     }
     
+    @available(macOS 10.15, *)
     func sendNotification(_ notification: NotificationItem) async throws {
         // Simulate sending push notification
     }
@@ -650,6 +601,7 @@ class InAppNotificationManager {
         // Configure in-app notification manager
     }
     
+    @available(macOS 10.15, *)
     func showNotification(_ notification: NotificationItem) async throws {
         // Simulate showing in-app notification
     }
@@ -660,6 +612,7 @@ class EmailNotificationManager {
         // Configure email notification manager
     }
     
+    @available(macOS 10.15, *)
     func sendNotification(_ notification: NotificationItem) async throws {
         // Simulate sending email notification
     }
@@ -670,6 +623,7 @@ class SMSNotificationManager {
         // Configure SMS notification manager
     }
     
+    @available(macOS 10.15, *)
     func sendNotification(_ notification: NotificationItem) async throws {
         // Simulate sending SMS notification
     }
@@ -680,6 +634,7 @@ class NotificationScheduler {
         // Configure notification scheduler
     }
     
+    @available(macOS 10.15, *)
     func scheduleNotification(_ notification: NotificationItem) async throws {
         // Simulate scheduling notification
     }
@@ -699,7 +654,8 @@ class NotificationPersonalizer {
         // Configure notification personalizer
     }
     
-    func personalizeNotification(_ notification: NotificationItem) async -> NotificationItem {
+    @available(macOS 10.15, *)
+    func personalizeNotification(_ notification: NotificationSystem.NotificationItem) async -> NotificationSystem.NotificationItem {
         // Simulate personalizing notification
         return notification
     }
@@ -711,10 +667,11 @@ class NotificationPersonalizer {
 }
 
 class NotificationAnalyticsEngine {
-    func configure(_ config: AnalyticsConfiguration) {
+    func configure(_ config: NotificationAnalyticsConfiguration) {
         // Configure notification analytics engine
     }
     
+    @available(macOS 10.15, *)
     func getAnalytics() async -> NotificationAnalytics {
         // Simulate getting analytics
         return NotificationAnalytics()
@@ -724,6 +681,11 @@ class NotificationAnalyticsEngine {
         // Simulate tracking notification open
     }
     
+    func trackNotificationSent(_ notificationId: String) async {
+        // Simulate tracking notification sent
+    }
+    
+    @available(macOS 10.15, *)
     func trackNotificationAction(_ notificationId: String, action: NotificationAction) async {
         // Simulate tracking notification action
     }
@@ -732,15 +694,16 @@ class NotificationAnalyticsEngine {
         // Simulate running A/B test
         return ABTestResult(
             testId: testConfig.testId,
-            variantA: ABTestVariant(name: "Control", openRate: 0.05, users: 1000),
-            variantB: ABTestVariant(name: "Treatment", openRate: 0.07, users: 1000),
+            variantA: ABTestVariant(name: "A", conversionRate: 0.15, users: 1000),
+            variantB: ABTestVariant(name: "B", conversionRate: 0.18, users: 1000),
             confidence: 0.95,
             isSignificant: true,
-            winner: "Treatment"
+            winner: "B"
         )
     }
     
-    func exportData(format: ExportFormat, dateRange: DateRange) async throws -> Data {
+    @available(macOS 10.15, *)
+    func exportData(format: NotificationExportFormat, dateRange: DateRange) async throws -> Data {
         // Simulate exporting data
         return "Mock notification data".data(using: .utf8) ?? Data()
     }
@@ -751,68 +714,141 @@ class NotificationTemplateEngine {
         // Configure notification template engine
     }
     
+    @available(macOS 10.15, *)
     func createTemplate(_ template: NotificationTemplate) async throws {
         // Simulate creating template
     }
     
+    @available(macOS 10.15, *)
     func getTemplate(_ templateName: String) async -> NotificationTemplate {
         // Simulate getting template
         return NotificationTemplate(
             name: templateName,
-            type: .contentRecommendation,
-            titleTemplate: "New content for you",
-            messageTemplate: "Check out this new content",
-            variables: [],
-            defaultPriority: .normal,
-            defaultChannels: [.push, .inApp],
-            isActive: true,
-            createdAt: Date(),
-            updatedAt: Date()
+            title: "Template Title",
+            message: "Template Message",
+            type: .info,
+            priority: .normal
         )
     }
     
+    @available(macOS 10.15, *)
     func createNotificationFromTemplate(_ template: NotificationTemplate, variables: [String: String]) async -> NotificationItem {
         // Simulate creating notification from template
         return NotificationItem(
-            title: template.titleTemplate,
-            message: template.messageTemplate,
+            id: UUID().uuidString,
+            title: template.title,
+            message: template.message,
             type: template.type,
-            category: .content,
-            priority: template.defaultPriority,
-            targetAudience: [],
-            deliveryChannels: template.defaultChannels,
-            scheduledTime: nil,
-            expirationTime: nil,
-            isInteractive: false,
-            actionButtons: [],
-            richMedia: nil,
-            metadata: NotificationMetadata(
-                campaignId: nil,
-                userId: nil,
-                contentId: nil,
-                sessionId: nil,
-                deviceInfo: DeviceInfo(
-                    platform: "iOS",
-                    version: "1.0",
-                    deviceModel: "iPhone",
-                    screenSize: "375x812",
-                    timezone: "UTC"
-                ),
-                locationInfo: nil,
-                customData: [:]
-            ),
-            status: .draft,
-            createdAt: Date(),
-            sentAt: nil,
-            deliveredAt: nil,
-            openedAt: nil
+            priority: .normal,
+            timestamp: Date(),
+            recipient: nil,
+            metadata: [:]
         )
     }
     
+    @available(macOS 10.15, *)
     func loadTemplates() async -> NotificationTemplates {
         // Simulate loading templates
         return NotificationTemplates()
     }
+}
+
+// MARK: - Data Structures
+
+enum NotificationType: String, Codable {
+    case push = "push"
+    case inApp = "in_app"
+    case email = "email"
+    case sms = "sms"
+    case system = "system"
+    case info = "info"
+}
+
+enum NotificationPriority: String, Codable {
+    case low = "low"
+    case normal = "normal"
+    case high = "high"
+    case critical = "critical"
+}
+
+enum DeliveryChannel: String, Codable {
+    case push = "push"
+    case inApp = "in_app"
+    case email = "email"
+    case sms = "sms"
+}
+
+struct NotificationItem: Codable, Identifiable {
+    let id: String
+    let title: String
+    let message: String
+    let type: NotificationType
+    let priority: NotificationPriority
+    let timestamp: Date
+    let recipient: String?
+    let metadata: [String: String]
+    
+    init(title: String, message: String, type: NotificationType, priority: NotificationPriority) {
+        self.id = UUID().uuidString
+        self.title = title
+        self.message = message
+        self.type = type
+        self.priority = priority
+        self.timestamp = Date()
+        self.recipient = nil
+        self.metadata = [:]
+    }
+}
+
+struct NotificationTemplate: Codable, Identifiable {
+    let id: String
+    let name: String
+    let title: String
+    let message: String
+    let type: NotificationType
+    let variables: [String]
+    
+    init(name: String, title: String, message: String, type: NotificationType, priority: NotificationPriority) {
+        self.id = UUID().uuidString
+        self.name = name
+        self.title = title
+        self.message = message
+        self.type = type
+        self.variables = []
+    }
+}
+
+struct NotificationTemplates: Codable {
+    let templates: [NotificationTemplate]
+    let totalTemplates: Int
+    
+    init() {
+        self.templates = []
+        self.totalTemplates = 0
+    }
+}
+
+struct NotificationAnalytics: Codable {
+    let totalSent: Int
+    let totalDelivered: Int
+    let totalOpened: Int
+    let deliveryRate: Double
+    let openRate: Double
+    
+    init() {
+        self.totalSent = 0
+        self.totalDelivered = 0
+        self.totalOpened = 0
+        self.deliveryRate = 0.0
+        self.openRate = 0.0
+    }
+}
+
+enum NotificationAction: String, Codable {
+    case opened = "opened"
+    case dismissed = "dismissed"
+    case clicked = "clicked"
+    case shared = "shared"
 }
 
 // MARK: - Supporting Data Structures
@@ -833,11 +869,11 @@ public struct PersonalizationConfiguration {
     var realTimeOptimization: Bool = true
 }
 
-public struct AnalyticsConfiguration {
+public struct NotificationAnalyticsConfiguration {
     var trackingEnabled: Bool = true
     var dataRetentionDays: Int = 365
     var privacyControls: [String] = []
-    var exportFormats: [ExportFormat] = [.json, .csv]
+    var exportFormats: [NotificationExportFormat] = [.json, .csv]
 }
 
 public struct NotificationABTest: Codable {
@@ -849,23 +885,8 @@ public struct NotificationABTest: Codable {
     let successMetric: String
 }
 
-public struct ABTestResult: Codable {
-    let testId: String
-    let variantA: ABTestVariant
-    let variantB: ABTestVariant
-    let confidence: Float
-    let isSignificant: Bool
-    let winner: String?
-}
-
-public struct ABTestVariant: Codable {
-    let name: String
-    let openRate: Float
-    let users: Int
-}
-
 public struct NotificationRecommendation: Codable, Identifiable {
-    public let id = UUID()
+    public var id = UUID()
     let title: String
     let message: String
     let type: NotificationType
@@ -874,12 +895,8 @@ public struct NotificationRecommendation: Codable, Identifiable {
     let reasoning: String
 }
 
-public struct DateRange: Codable {
-    let startDate: Date
-    let endDate: Date
-}
-
-public enum ExportFormat: String, CaseIterable, Codable {
+// Add local ExportFormat enum to avoid ambiguity
+public enum NotificationExportFormat: String, CaseIterable, Codable {
     case json = "JSON"
     case csv = "CSV"
     case xml = "XML"

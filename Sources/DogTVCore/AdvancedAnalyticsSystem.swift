@@ -31,6 +31,7 @@ import Combine
  * - Performance optimization
  * - Strategic recommendations
  */
+@available(macOS 10.15, *)
 public class AdvancedAnalyticsSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -49,7 +50,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     private let reportingEngine = ReportingEngine()
     
     // MARK: - Configuration
-    private var analyticsConfig: AnalyticsConfiguration
+    private var analyticsConfig: AdvancedAnalyticsConfiguration
     private var predictiveConfig: PredictiveConfiguration
     private var businessConfig: BusinessConfiguration
     
@@ -75,7 +76,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct KPI: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var value: Float
         var target: Float
@@ -109,7 +110,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct TrendingMetric: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var currentValue: Float
         var previousValue: Float
@@ -119,7 +120,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct AnalyticsAlert: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var title: String
         var message: String
         var severity: AlertSeverity
@@ -161,7 +162,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct ContentRecommendation: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var contentId: String
         var predictedEngagement: Float
         var confidence: Float
@@ -204,12 +205,13 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct RevenueMetrics: Codable {
-        var totalRevenue: Float = 0.0
-        var monthlyRecurringRevenue: Float = 0.0
-        var averageRevenuePerUser: Float = 0.0
-        var customerLifetimeValue: Float = 0.0
-        var conversionRate: Float = 0.0
-        var churnRate: Float = 0.0
+        var totalRevenue: Double = 0.0
+        var monthlyRecurringRevenue: Double = 0.0
+        var averageRevenuePerUser: Double = 0.0
+        var customerLifetimeValue: Double = 0.0
+        var conversionRate: Double = 0.0
+        var churnRate: Double = 0.0
+        var subscriptionRetention: Double = 0.0
     }
     
     public struct UserMetrics: Codable {
@@ -219,6 +221,8 @@ public class AdvancedAnalyticsSystem: ObservableObject {
         var returningUsers: Int = 0
         var userGrowthRate: Float = 0.0
         var retentionRate: Float = 0.0
+        var churnedUsers: Int = 0
+        var engagementRate: Double = 0.0
     }
     
     public struct EngagementMetrics: Codable {
@@ -237,6 +241,10 @@ public class AdvancedAnalyticsSystem: ObservableObject {
         var errorRate: Float = 0.0
         var systemUptime: Float = 0.0
         var userSatisfaction: Float = 0.0
+        var responseTime: Double = 0.0
+        var throughput: Double = 0.0
+        var cpuUsage: Double = 0.0
+        var memoryUsage: Double = 0.0
     }
     
     public struct UserInsights: Codable {
@@ -257,7 +265,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct BehaviorPattern: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var pattern: String
         var frequency: Int
         var users: Int
@@ -266,7 +274,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct CohortAnalysis: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var cohort: String
         var size: Int
         var retentionRates: [Int: Float] // Day: Retention Rate
@@ -274,7 +282,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct FunnelStep: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var name: String
         var users: Int
         var conversionRate: Float
@@ -291,7 +299,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct ContentPerformance: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var contentId: String
         var title: String
         var views: Int
@@ -303,7 +311,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct CategoryAnalytics: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var category: String
         var totalViews: Int
         var averageWatchTime: TimeInterval
@@ -313,7 +321,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     public struct TrendingContent: Codable, Identifiable {
-        public let id = UUID()
+        public var id = UUID()
         var contentId: String
         var title: String
         var trend: TrendDirection
@@ -325,7 +333,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     // MARK: - Initialization
     
     public init() {
-        self.analyticsConfig = AnalyticsConfiguration()
+        self.analyticsConfig = AdvancedAnalyticsConfiguration()
         self.predictiveConfig = PredictiveConfiguration()
         self.businessConfig = BusinessConfiguration()
         
@@ -440,7 +448,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
         let engagementMetrics = await businessIntelligence.getEngagementMetrics()
         let performanceMetrics = await businessIntelligence.getPerformanceMetrics()
         
-        let businessMetrics = BusinessMetrics(
+        let businessMetrics = AdvancedAnalyticsSystem.BusinessMetrics(
             revenueMetrics: revenueMetrics,
             userMetrics: userMetrics,
             engagementMetrics: engagementMetrics,
@@ -526,19 +534,23 @@ public class AdvancedAnalyticsSystem: ObservableObject {
     }
     
     private func updateRealTimeMetrics() {
-        Task {
-            let dashboard = await generateRealTimeDashboard()
-            await MainActor.run {
-                analyticsDashboard = dashboard
+        if #available(macOS 10.15, *) {
+            Task {
+                let dashboard = await generateRealTimeDashboard()
+                await MainActor.run {
+                    analyticsDashboard = dashboard
+                }
             }
         }
     }
     
     private func updatePredictiveInsights() {
-        Task {
-            let insights = await generatePredictiveInsights()
-            await MainActor.run {
-                predictiveInsights = insights
+        if #available(macOS 10.15, *) {
+            Task {
+                let insights = await generatePredictiveInsights()
+                await MainActor.run {
+                    predictiveInsights = insights
+                }
             }
         }
     }
@@ -556,7 +568,7 @@ public class AdvancedAnalyticsSystem: ObservableObject {
 // MARK: - Supporting Classes
 
 class RealTimeAnalytics {
-    func configure(_ config: AnalyticsConfiguration) {
+    func configure(_ config: AdvancedAnalyticsConfiguration) {
         // Configure real-time analytics
     }
     
@@ -640,6 +652,7 @@ class PredictiveEngine {
     }
 }
 
+@available(macOS 10.15, *)
 class BusinessIntelligence {
     func configure(_ config: BusinessConfiguration) {
         // Configure business intelligence
@@ -699,48 +712,37 @@ class BusinessIntelligence {
     func getRevenueMetrics() async -> RevenueMetrics {
         // Simulate revenue metrics
         return RevenueMetrics(
-            totalRevenue: Float.random(in: 100000...500000),
-            monthlyRecurringRevenue: Float.random(in: 50000...200000),
-            averageRevenuePerUser: Float.random(in: 5...25),
-            customerLifetimeValue: Float.random(in: 50...200),
-            conversionRate: Float.random(in: 0.02...0.08),
-            churnRate: Float.random(in: 0.05...0.15)
+            totalRevenue: Double.random(in: 100000...500000),
+            averageRevenuePerUser: Double.random(in: 5...25),
+            conversionRate: Double.random(in: 0.02...0.08),
+            subscriptionRetention: Double.random(in: 0.7...0.95)
         )
     }
     
-    func getUserMetrics() async -> UserMetrics {
+    func getUserMetrics() async -> AdvancedAnalyticsSystem.UserMetrics {
         // Simulate user metrics
-        return UserMetrics(
+        return AdvancedAnalyticsSystem.UserMetrics(
             totalUsers: Int.random(in: 50000...200000),
             activeUsers: Int.random(in: 10000...50000),
             newUsers: Int.random(in: 1000...5000),
-            returningUsers: Int.random(in: 8000...40000),
-            userGrowthRate: Float.random(in: 0.1...0.4),
-            retentionRate: Float.random(in: 0.6...0.9)
+            churnRate: Float.random(in: 0.01...0.05),
+            retentionRate: Float.random(in: 0.7...0.9)
         )
     }
     
     func getEngagementMetrics() async -> EngagementMetrics {
         // Simulate engagement metrics
-        return EngagementMetrics(
-            dailyActiveUsers: Int.random(in: 8000...25000),
-            weeklyActiveUsers: Int.random(in: 20000...60000),
-            monthlyActiveUsers: Int.random(in: 40000...120000),
-            averageSessionDuration: TimeInterval.random(in: 300...900),
-            sessionsPerUser: Float.random(in: 2...8),
-            engagementScore: Float.random(in: 0.6...0.9)
-        )
+        return EngagementMetrics()
     }
     
     func getPerformanceMetrics() async -> PerformanceMetrics {
         // Simulate performance metrics
         return PerformanceMetrics(
-            appLaunchTime: TimeInterval.random(in: 1...3),
-            contentLoadTime: TimeInterval.random(in: 2...5),
-            crashRate: Float.random(in: 0.001...0.01),
-            errorRate: Float.random(in: 0.005...0.02),
-            systemUptime: Float.random(in: 0.99...0.999),
-            userSatisfaction: Float.random(in: 4.0...5.0)
+            responseTime: Double.random(in: 1...3),
+            throughput: Double.random(in: 1000...5000),
+            errorRate: Double.random(in: 0.005...0.02),
+            cpuUsage: Double.random(in: 0.1...0.5),
+            memoryUsage: Double.random(in: 0.1...0.5)
         )
     }
     
@@ -764,8 +766,8 @@ class BusinessIntelligence {
         // Simulate A/B test analysis
         return ABTestAnalysis(
             testId: testId,
-            variantA: ABTestVariant(name: "Control", conversionRate: 0.05, users: 1000),
-            variantB: ABTestVariant(name: "Treatment", conversionRate: 0.07, users: 1000),
+            variantA: AdvancedAnalyticsSystem.ABTestVariant(name: "Control", conversionRate: 0.05, users: 1000),
+            variantB: AdvancedAnalyticsSystem.ABTestVariant(name: "Treatment", conversionRate: 0.07, users: 1000),
             confidence: 0.95,
             isSignificant: true,
             winner: "Treatment"
@@ -778,7 +780,7 @@ class BusinessIntelligence {
 }
 
 class UserAnalytics {
-    func configure(_ config: AnalyticsConfiguration) {
+    func configure(_ config: AdvancedAnalyticsConfiguration) {
         // Configure user analytics
     }
     
@@ -842,7 +844,7 @@ class UserAnalytics {
 }
 
 class ContentAnalyticsEngine {
-    func configure(_ config: AnalyticsConfiguration) {
+    func configure(_ config: AdvancedAnalyticsConfiguration) {
         // Configure content analytics engine
     }
     
@@ -905,7 +907,7 @@ class ContentAnalyticsEngine {
 }
 
 class ReportingEngine {
-    func configure(_ config: AnalyticsConfiguration) {
+    func configure(_ config: AdvancedAnalyticsConfiguration) {
         // Configure reporting engine
     }
     
@@ -939,7 +941,7 @@ class ReportingEngine {
 
 // MARK: - Supporting Data Structures
 
-public struct AnalyticsConfiguration {
+public struct AdvancedAnalyticsConfiguration {
     var realTimeEnabled: Bool = true
     var predictiveEnabled: Bool = true
     var retentionDays: Int = 365
@@ -984,7 +986,7 @@ public struct ABTestVariant: Codable {
 
 public struct CustomReport: Codable {
     let title: String
-    let data: [String: Any]
+    let data: [String: String]
     let visualizations: [String]
     let generatedAt: Date
 }

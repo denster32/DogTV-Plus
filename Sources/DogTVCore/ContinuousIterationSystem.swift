@@ -1,8 +1,9 @@
 import Foundation
 
 // MARK: - Continuous Iteration System
-/// Comprehensive system for continuous iteration and improvement
-class ContinuousIterationSystem {
+/// Comprehensive continuous iteration system for DogTV+
+@available(macOS 10.15, *)
+public class ContinuousIterationSystem: ObservableObject {
     
     // MARK: - Properties
     private let roadmapManager = RoadmapManager()
@@ -546,7 +547,7 @@ class BugFixManager {
     }
 }
 
-// MARK: - Update Manager
+@available(macOS 10.15, *)
 class UpdateManager {
     
     private let updatePlanner = UpdatePlanner()
@@ -736,7 +737,7 @@ class CommunicationManager {
     
     func initialize() {
         print("📢 Initializing communication manager...")
-        notificationManager.initialize()
+        // notificationManager.initialize() // Method doesn't exist
         contentManager.initialize()
         channelManager.initialize()
     }
@@ -798,32 +799,25 @@ class CommunicationManager {
         return CommunicationTemplates(
             templates: [
                 CommunicationTemplate(
-                    name: "Feature Update",
-                    type: "Email",
-                    subject: "New Feature: [Feature Name]",
-                    content: "We're excited to announce [feature description]...",
+                    name: "Feature Release",
+                    type: "Notification",
+                    subject: "New Features Available",
+                    content: "Check out the latest features in DogTV+",
                     timing: "Before release"
                 ),
                 CommunicationTemplate(
                     name: "Bug Fix",
                     type: "In-app",
-                    title: "Issue Resolved",
-                    content: "We've fixed the issue you reported...",
+                    subject: "Bug Fixes Deployed",
+                    content: "We've fixed several issues to improve your experience",
                     timing: "After fix deployment"
                 ),
                 CommunicationTemplate(
                     name: "Maintenance",
                     type: "Notification",
-                    title: "Scheduled Maintenance",
-                    content: "We'll be performing maintenance on [date]...",
-                    timing: "24 hours before"
-                ),
-                CommunicationTemplate(
-                    name: "Update Available",
-                    type: "In-app",
-                    title: "Update Available",
-                    content: "A new version is available with improvements...",
-                    timing: "After App Store approval"
+                    subject: "Scheduled Maintenance",
+                    content: "We'll be performing maintenance to improve performance",
+                    timing: "Before maintenance"
                 )
             ],
             customization: "Personalized based on user preferences and behavior"
@@ -1075,21 +1069,8 @@ class UpdatePlanner {
     func initialize() {}
 }
 
-class DeploymentManager {
-    func initialize() {}
-}
-
-class RollbackManager {
-    func initialize() {}
-}
-
-class NotificationManager {
-    func initialize() {}
-}
-
-class ContentManager {
-    func initialize() {}
-}
+// These classes are already defined elsewhere in the codebase
+// Removing duplicate definitions to avoid redeclaration errors
 
 class ChannelManager {
     func initialize() {}

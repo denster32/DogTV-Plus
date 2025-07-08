@@ -4,6 +4,7 @@ import Combine
 import LocalAuthentication
 
 /// A comprehensive user management system for DogTV+ with authentication and profile management
+@available(macOS 10.15, *)
 public class UserManagementSystem: ObservableObject {
     @Published public var currentUser: User?
     @Published public var userDogs: [DogProfile] = []
@@ -300,11 +301,15 @@ public struct User: Identifiable, Codable {
 public struct UserPreferences: Codable {
     public var notificationsEnabled: Bool = true
     public var autoPlayEnabled: Bool = true
-    public var qualityPreference: VideoQuality = .auto
+    public var qualityPreference: ProceduralQuality = .auto
     public var biometricEnabled: Bool = false
     public var lastDogAdded: Date?
-    public var favoriteCategories: [ContentCategory] = []
-    public var watchHistory: [String] = [] // Video IDs
+    public var favoriteCategories: [ProceduralCategory] = []
+    public var watchHistory: [String] = [] // Session IDs
+    public var preferredDuration: TimeInterval = 1800 // 30 minutes
+    public var volumeSensitivity: VolumeSensitivity = .normal
+    public var brightnessPreference: BrightnessLevel = .medium
+    public var motionSensitivity: MotionSensitivity = .normal
     
     public init() {}
 }
@@ -312,14 +317,14 @@ public struct UserPreferences: Codable {
 public struct DogProfile: Identifiable, Codable {
     public let id: String
     public let name: String
-    public let breed: DogBreed
+    public let breed: String // Simplified to string instead of enum
     public let age: Int // in months
     public let weight: Double // in kg
     public let temperament: DogTemperament
     public let preferences: DogPreferences
     public let createdAt: Date
     
-    public init(id: String = UUID().uuidString, name: String, breed: DogBreed, age: Int, weight: Double, temperament: DogTemperament, preferences: DogPreferences, createdAt: Date = Date()) {
+    public init(id: String = UUID().uuidString, name: String, breed: String, age: Int, weight: Double, temperament: DogTemperament, preferences: DogPreferences, createdAt: Date = Date()) {
         self.id = id
         self.name = name
         self.breed = breed
@@ -352,10 +357,13 @@ public enum DogTemperament: String, CaseIterable, Codable {
 }
 
 public struct DogPreferences: Codable {
-    public var favoriteContentTypes: [ContentCategory] = []
+    public var favoriteContentTypes: [ProceduralCategory] = []
     public var preferredDuration: TimeInterval = 1800 // 30 minutes
     public var volumeSensitivity: VolumeSensitivity = .normal
+    public var brightnessPreference: BrightnessLevel = .medium
     public var motionSensitivity: MotionSensitivity = .normal
+    public var colorPreference: ColorPreference = .blueYellow
+    public var patternPreference: PatternPreference = .gentle
     
     public init() {}
 }
@@ -438,6 +446,7 @@ class KeychainWrapper {
 
 // MARK: - User Management Views
 
+@available(macOS 10.15, *)
 public struct UserLoginView: View {
     @ObservedObject var userManager: UserManagementSystem
     @State private var email = ""
@@ -539,10 +548,11 @@ public struct UserLoginView: View {
     }
 }
 
+@available(macOS 10.15, *)
 public struct DogProfileCreationView: View {
     @ObservedObject var userManager: UserManagementSystem
     @State private var name = ""
-    @State private var selectedBreed = DogBreed.goldenRetriever
+    @State private var selectedBreed = "Golden Retriever"
     @State private var age = 12
     @State private var weight = 25.0
     @State private var selectedTemperament = DogTemperament.calm
@@ -558,8 +568,8 @@ public struct DogProfileCreationView: View {
                     TextField("Dog's Name", text: $name)
                     
                     Picker("Breed", selection: $selectedBreed) {
-                        ForEach(DogBreed.allCases, id: \.self) { breed in
-                            Text(breed.rawValue).tag(breed)
+                        ForEach(commonBreeds, id: \.self) { breed in
+                            Text(breed).tag(breed)
                         }
                     }
                     
@@ -570,7 +580,6 @@ public struct DogProfileCreationView: View {
                         Spacer()
                         TextField("Weight", value: $weight, format: .number)
                             .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
                         Text("kg")
                     }
                 }
@@ -578,37 +587,71 @@ public struct DogProfileCreationView: View {
                 Section(header: Text("Temperament")) {
                     Picker("Temperament", selection: $selectedTemperament) {
                         ForEach(DogTemperament.allCases, id: \.self) { temperament in
-                            VStack(alignment: .leading) {
-                                Text(temperament.rawValue)
-                                Text(temperament.description)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            .tag(temperament)
+                            Text(temperament.rawValue).tag(temperament)
                         }
                     }
-                    .pickerStyle(WheelPickerStyle())
                 }
                 
                 Section {
                     Button("Add Dog Profile") {
-                        Task {
-                            let dog = DogProfile(
-                                name: name,
-                                breed: selectedBreed,
-                                age: age,
-                                weight: weight,
-                                temperament: selectedTemperament,
-                                preferences: DogPreferences()
-                            )
-                            try await userManager.addDogProfile(dog)
-                        }
+                        let dog = DogProfile(
+                            name: name,
+                            breed: selectedBreed,
+                            age: age,
+                            weight: weight,
+                            temperament: selectedTemperament,
+                            preferences: DogPreferences()
+                        )
+                        userManager.addDogProfile(dog)
                     }
                     .disabled(name.isEmpty)
                 }
             }
             .navigationTitle("Add Dog Profile")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
+    
+    private let commonBreeds = [
+        "Golden Retriever", "Labrador Retriever", "German Shepherd", "Bulldog",
+        "Beagle", "Poodle", "Rottweiler", "Yorkshire Terrier", "Boxer", "Dachshund",
+        "Great Dane", "Doberman", "Siberian Husky", "Chihuahua", "Pomeranian",
+        "Shih Tzu", "Border Collie", "Bernese Mountain Dog", "Cavalier King Charles Spaniel",
+        "Mixed Breed", "Other"
+    ]
+}
+
+public enum ProceduralQuality: String, CaseIterable, Codable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case auto = "Auto"
+}
+
+public enum ProceduralCategory: String, CaseIterable, Codable {
+    case calming = "Calming"
+    case stimulating = "Stimulating"
+    case nature = "Nature"
+    case abstract = "Abstract"
+    case movement = "Movement"
+    case sound = "Sound"
+}
+
+public enum BrightnessLevel: String, CaseIterable, Codable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case auto = "Auto"
+}
+
+public enum ColorPreference: String, CaseIterable, Codable {
+    case blueYellow = "Blue-Yellow"
+    case blueGray = "Blue-Gray"
+    case yellowGray = "Yellow-Gray"
+    case mixed = "Mixed"
+}
+
+public enum PatternPreference: String, CaseIterable, Codable {
+    case gentle = "Gentle"
+    case moderate = "Moderate"
+    case active = "Active"
 } 

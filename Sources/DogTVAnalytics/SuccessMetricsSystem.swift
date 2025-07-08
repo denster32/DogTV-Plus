@@ -99,7 +99,7 @@ class SuccessMetricsSystem {
         return [
             PerformanceKPI(
                 name: "Frame Rate Stability",
-                description: "Consistent frame rate during video playback",
+                description: "Consistent frame rate during procedural content generation",
                 metric: "FPS",
                 target: 30.0,
                 threshold: 25.0,

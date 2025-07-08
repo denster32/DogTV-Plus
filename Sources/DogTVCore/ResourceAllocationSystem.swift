@@ -1,9 +1,18 @@
 import Foundation
-import XcodeProject
+// import XcodeProject
+
+public enum SkillLevel: Int, Codable {
+    case beginner = 0
+    case intermediate = 1
+    case advanced = 2
+    case expert = 3
+}
 
 // MARK: - Resource Allocation System
 /// Comprehensive system for resource allocation and tooling assessment
 class ResourceAllocationSystem {
+    
+    // Add missing type definitions
     
     // MARK: - Properties
     private let teamManager = TeamManager()
@@ -80,7 +89,7 @@ class ResourceAllocationSystem {
     }
     
     /// Get current resource status
-    func getResourceStatus() -> ResourceStatus {
+    func getResourceStatus() -> ResourceAllocationStatus {
         return resourcePlanner.getCurrentStatus()
     }
     
@@ -485,8 +494,8 @@ class ResourcePlanner {
         return allocation
     }
     
-    func getCurrentStatus() -> ResourceStatus {
-        return ResourceStatus(
+    func getCurrentStatus() -> ResourceAllocationStatus {
+        return ResourceAllocationStatus(
             currentAllocation: currentAllocation,
             utilization: calculateUtilization(),
             lastUpdated: Date()
@@ -906,14 +915,14 @@ struct HardwareProcurement {
 }
 
 struct Device {
-    let type: DeviceType
+    let type: ResourceDeviceType
     let model: String
     let quantity: Int
     let cost: Double
     let purpose: String
 }
 
-enum DeviceType {
+enum ResourceDeviceType {
     case appleTV
     case mac
     case iphone
@@ -966,7 +975,7 @@ struct BudgetAllocation {
     let totalBudget: Double
 }
 
-struct ResourceStatus {
+struct ResourceAllocationStatus {
     let currentAllocation: ResourceAllocation?
     let utilization: Double
     let lastUpdated: Date
@@ -995,21 +1004,21 @@ struct SkillAnalysis {
 
 struct RequiredSkill {
     let name: String
-    let level: SkillLevel
-    let importance: Importance
+    let level: ResourceSkillLevel
+    let importance: ResourceImportance
     let description: String
 }
 
 struct CurrentSkill {
     let name: String
-    let level: SkillLevel
+    let level: ResourceSkillLevel
     let teamMembers: [String]
 }
 
 struct SkillGap {
     let skill: String
-    let requiredLevel: SkillLevel
-    let currentLevel: SkillLevel
+    let requiredLevel: ResourceSkillLevel
+    let currentLevel: ResourceSkillLevel
     let teamMembers: [String]
 }
 
@@ -1021,14 +1030,14 @@ struct TrainingPlan {
 
 struct TrainingProgram {
     let skill: String
-    let currentLevel: SkillLevel
-    let targetLevel: SkillLevel
+    let currentLevel: ResourceSkillLevel
+    let targetLevel: ResourceSkillLevel
     let duration: Int
     let cost: Double
     let format: TrainingFormat
 }
 
-enum SkillLevel: Int {
+enum ResourceSkillLevel: Int {
     case none = 0
     case basic = 1
     case intermediate = 2
@@ -1036,7 +1045,7 @@ enum SkillLevel: Int {
     case expert = 4
 }
 
-enum Importance {
+enum ResourceImportance {
     case low
     case medium
     case high

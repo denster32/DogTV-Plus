@@ -36,14 +36,15 @@ import CryptoKit
  * - Quantum key distribution protocols
  * - Quantum error correction codes
  */
+@available(macOS 10.15, *)
 public class QuantumComputingSystem: ObservableObject {
     
     // MARK: - Published Properties
-    @Published public var quantumStatus: QuantumStatus = QuantumStatus()
+    @Published public var quantumStatus: QuantumStatus = QuantumStatus(isConnected: false, qubitCount: 0, coherenceTime: 0, temperature: 0, errorRate: 0)
     @Published public var quantumAlgorithms: QuantumAlgorithms = QuantumAlgorithms()
     @Published public var quantumSecurity: QuantumSecurity = QuantumSecurity()
-    @Published public var quantumSimulation: QuantumSimulation = QuantumSimulation()
-    @Published public var quantumPerformance: QuantumPerformance = QuantumPerformance()
+    @Published public var quantumSimulation: QuantumSimulation = QuantumSimulation(maxSimulations: 1)
+    @Published public var quantumPerformance: QuantumPerformance = QuantumPerformance(operationsPerSecond: 0, successRate: 0, averageExecutionTime: 0, qubitUtilization: 0)
     
     // MARK: - System Components
     private let quantumManager = QuantumManager()
@@ -62,14 +63,36 @@ public class QuantumComputingSystem: ObservableObject {
     
     // MARK: - Data Structures
     
-    public struct QuantumStatus: Codable {
-        var isAvailable: Bool = false
-        var quantumType: QuantumType = .simulation
-        var qubitCount: Int = 0
-        var coherenceTime: TimeInterval = 0.0
-        var errorRate: Float = 0.0
-        var temperature: Float = 0.0
-        var lastUpdated: Date = Date()
+    public enum QuantumAlgorithm: String, CaseIterable, Codable {
+        case grover = "Grover"
+        case shor = "Shor"
+        case deutsch = "Deutsch"
+        case simon = "Simon"
+        case bernstein = "Bernstein-Vazirani"
+    }
+    
+    public struct QuantumAlgorithms: Codable {
+        var availableAlgorithms: [QuantumAlgorithm] = []
+        var runningAlgorithms: [RunningAlgorithm] = []
+        var completedAlgorithms: [QuantumAlgorithmResult] = []
+    }
+    
+    public struct RunningAlgorithm: Codable, Identifiable {
+        public let id = UUID()
+        var algorithmId: UUID
+        var startTime: Date
+        var status: AlgorithmStatus
+        var progress: Float
+    }
+    
+    public struct QuantumAlgorithmResult: Codable, Identifiable {
+        public let id = UUID()
+        var algorithmId: UUID
+        var result: String
+        var executionTime: TimeInterval
+        var qubitsUsed: Int
+        var accuracy: Float
+        var timestamp: Date
     }
     
     public enum QuantumType: String, CaseIterable, Codable {
@@ -80,27 +103,6 @@ public class QuantumComputingSystem: ObservableObject {
         case ionTrap = "Ion Trap"
         case superconducting = "Superconducting"
         case photonic = "Photonic"
-    }
-    
-    public struct QuantumAlgorithms: Codable {
-        var availableAlgorithms: [QuantumAlgorithm] = []
-        var runningAlgorithms: [RunningAlgorithm] = []
-        var algorithmResults: [AlgorithmResult] = []
-        var performanceMetrics: [AlgorithmMetric] = []
-        var lastUpdated: Date = Date()
-    }
-    
-    public struct QuantumAlgorithm: Codable, Identifiable {
-        public let id = UUID()
-        var name: String
-        var type: AlgorithmType
-        var description: String
-        var complexity: AlgorithmComplexity
-        var qubitsRequired: Int
-        var expectedRuntime: TimeInterval
-        var accuracy: Float
-        var isQuantumSupremacy: Bool
-        var implementation: AlgorithmImplementation
     }
     
     public enum AlgorithmType: String, CaseIterable, Codable {
@@ -138,28 +140,6 @@ public class QuantumComputingSystem: ObservableObject {
         case intermediate = "Intermediate"
         case advanced = "Advanced"
         case expert = "Expert"
-    }
-    
-    public struct RunningAlgorithm: Codable, Identifiable {
-        public let id = UUID()
-        var algorithmId: UUID
-        var startTime: Date
-        var estimatedCompletion: Date?
-        var progress: Float
-        var status: AlgorithmStatus
-        var currentStep: String
-        var qubitsUsed: Int
-        var errorCount: Int
-    }
-    
-    public enum AlgorithmStatus: String, CaseIterable, Codable {
-        case queued = "Queued"
-        case initializing = "Initializing"
-        case running = "Running"
-        case measuring = "Measuring"
-        case completed = "Completed"
-        case failed = "Failed"
-        case cancelled = "Cancelled"
     }
     
     public struct AlgorithmResult: Codable, Identifiable {
@@ -210,67 +190,125 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     public struct QuantumSecurity: Codable {
-        var quantumKeys: [QuantumKey] = []
         var encryptionAlgorithms: [QuantumEncryption] = []
-        var keyDistribution: KeyDistributionStatus = KeyDistributionStatus()
         var securityProtocols: [SecurityProtocol] = []
-        var lastUpdated: Date = Date()
+        var keyManagement: QuantumKeyManagement = QuantumKeyManagement()
+    }
+    
+    public struct QuantumKeyManagement: Codable {
+        var keys: [QuantumKey] = []
+        var keyRotationPolicy: KeyRotationPolicy = .automatic
+        var encryptionStrength: EncryptionStrength = .quantum
     }
     
     public struct QuantumKey: Codable, Identifiable {
         public let id = UUID()
-        var keyId: String
+        var keyData: Data
         var keyType: KeyType
-        var keyLength: Int
-        var generationMethod: KeyGenerationMethod
         var creationDate: Date
         var expirationDate: Date?
         var isActive: Bool
-        var usageCount: Int
-        var securityLevel: SecurityLevel
     }
     
-    public enum KeyType: String, CaseIterable, Codable {
-        case symmetric = "Symmetric"
-        case asymmetric = "Asymmetric"
-        case quantum = "Quantum"
-        case hybrid = "Hybrid"
+    public enum KeyType: String, Codable {
+        case symmetric = "symmetric"
+        case asymmetric = "asymmetric"
+        case quantum = "quantum"
     }
     
-    public enum KeyGenerationMethod: String, CaseIterable, Codable {
-        case quantumRandom = "Quantum Random"
-        case postQuantum = "Post-Quantum"
-        case quantumKeyDistribution = "Quantum Key Distribution"
-        case hybridClassical = "Hybrid Classical-Quantum"
+    public enum KeyRotationPolicy: String, Codable {
+        case manual = "manual"
+        case automatic = "automatic"
+        case timeBased = "time_based"
     }
     
-    public enum SecurityLevel: String, CaseIterable, Codable {
-        case standard = "Standard"
-        case high = "High"
-        case quantum = "Quantum-Safe"
-        case postQuantum = "Post-Quantum"
+    public enum EncryptionStrength: String, Codable {
+        case standard = "standard"
+        case enhanced = "enhanced"
+        case quantum = "quantum"
     }
     
-    public struct QuantumEncryption: Codable, Identifiable {
+    public struct QuantumStatus: Codable {
+        var isConnected: Bool
+        var qubitCount: Int
+        var coherenceTime: TimeInterval
+        var temperature: Float
+        var errorRate: Float
+    }
+    
+    public struct QuantumPerformance: Codable {
+        var operationsPerSecond: Int
+        var successRate: Float
+        var averageExecutionTime: TimeInterval
+        var qubitUtilization: Float
+    }
+    
+    public struct QuantumCircuit: Codable, Identifiable {
         public let id = UUID()
-        var name: String
-        var type: EncryptionType
-        var keySize: Int
-        var securityLevel: SecurityLevel
-        var performance: EncryptionPerformance
-        var isQuantumResistant: Bool
-        var implementation: String
+        var gates: [QuantumGate] = []
+        var qubits: Int
+        var depth: Int
+        var optimizationLevel: OptimizationLevel
     }
     
-    public enum EncryptionType: String, CaseIterable, Codable {
-        case aes = "AES"
-        case rsa = "RSA"
-        case ecc = "Elliptic Curve"
-        case lattice = "Lattice-Based"
-        case code = "Code-Based"
-        case multivariate = "Multivariate"
-        case hash = "Hash-Based"
-        case quantum = "Quantum"
+    public struct QuantumGate: Codable {
+        var type: GateType
+        var qubits: [Int]
+        var parameters: [Double]
+    }
+    
+    public enum GateType: String, Codable {
+        case hadamard = "H"
+        case pauliX = "X"
+        case pauliY = "Y"
+        case pauliZ = "Z"
+        case cnot = "CNOT"
+        case swap = "SWAP"
+    }
+    
+    public struct QuantumSimulation: Codable {
+        var activeSimulations: [ActiveSimulation] = []
+        var simulationResults: [SimulationResult] = []
+        var maxSimulations: Int
+    }
+    
+    @available(macOS 10.15, *)
+    public struct ActiveSimulation: Codable, Identifiable {
+        public let id = UUID()
+        var circuit: QuantumCircuit
+        var shots: Int
+        var startTime: Date
+        var status: SimulationStatus
+    }
+    
+    public struct SimulationResult: Codable, Identifiable {
+        public let id = UUID()
+        var circuitId: UUID
+        var shots: Int
+        var results: [String: Int]
+        var executionTime: TimeInterval
+        var timestamp: Date
+    }
+    
+    public enum SimulationStatus: String, Codable {
+        case running = "running"
+        case completed = "completed"
+        case failed = "failed"
+        case cancelled = "cancelled"
+    }
+    
+    public enum QKDProtocol: String, CaseIterable, Codable {
+        case bb84 = "BB84"
+        case bbm92 = "BBM92"
+        case e91 = "E91"
+        case sarg04 = "SARG04"
+        case decoy = "Decoy State"
+    }
+    
+    public enum EncryptionType: String, Codable {
+        case lattice = "lattice"
+        case code = "code"
+        case multivariate = "multivariate"
     }
     
     public struct EncryptionPerformance: Codable {
@@ -283,19 +321,11 @@ public class QuantumComputingSystem: ObservableObject {
     
     public struct KeyDistributionStatus: Codable {
         var isActive: Bool = false
-        var protocol: QKDProtocol = .bb84
+        var `protocol`: QKDProtocol = .bb84
         var keyRate: Float = 0.0
         var errorRate: Float = 0.0
         var distance: Float = 0.0
         var lastKeyExchange: Date?
-    }
-    
-    public enum QKDProtocol: String, CaseIterable, Codable {
-        case bb84 = "BB84"
-        case bbm92 = "BBM92"
-        case e91 = "E91"
-        case sarg04 = "SARG04"
-        case decoy = "Decoy State"
     }
     
     public struct SecurityProtocol: Codable, Identifiable {
@@ -317,129 +347,31 @@ public class QuantumComputingSystem: ObservableObject {
         case zeroKnowledge = "Zero-Knowledge Proof"
     }
     
-    public struct QuantumSimulation: Codable {
-        var activeSimulations: [ActiveSimulation] = []
-        var simulationResults: [SimulationResult] = []
-        var quantumCircuits: [QuantumCircuit] = []
-        var simulationMetrics: [SimulationMetric] = []
-        var lastUpdated: Date = Date()
+    public struct MLData: Codable {
+        var features: [[Double]]
+        var labels: [Int]
+        var testSplit: Double
     }
     
-    public struct ActiveSimulation: Codable, Identifiable {
-        public let id = UUID()
-        var name: String
-        var type: SimulationType
-        var qubits: Int
-        var depth: Int
-        var progress: Float
-        var startTime: Date
-        var estimatedCompletion: Date?
-        var status: SimulationStatus
-        var parameters: [String: String]
-    }
-    
-    public enum SimulationType: String, CaseIterable, Codable {
-        case quantumChemistry = "Quantum Chemistry"
-        case materialScience = "Material Science"
-        case optimization = "Optimization"
-        case machineLearning = "Machine Learning"
-        case cryptography = "Cryptography"
-        case physics = "Physics"
-        case finance = "Finance"
-    }
-    
-    public enum SimulationStatus: String, CaseIterable, Codable {
-        case initializing = "Initializing"
-        case running = "Running"
-        case measuring = "Measuring"
-        case analyzing = "Analyzing"
-        case completed = "Completed"
-        case failed = "Failed"
-    }
-    
-    public struct SimulationResult: Codable, Identifiable {
-        public let id = UUID()
-        var simulationId: UUID
-        var result: String
+    public struct MLResult: Codable {
         var accuracy: Float
-        var confidence: Float
-        var classicalComparison: String?
-        var quantumAdvantage: Float?
+        var predictions: [Int]
+        var model: String
         var timestamp: Date
     }
     
-    public struct QuantumCircuit: Codable, Identifiable {
+    public struct QuantumEncryption: Codable, Identifiable {
         public let id = UUID()
         var name: String
-        var qubits: Int
-        var gates: [QuantumGate] = []
-        var depth: Int
-        var width: Int
-        var optimization: CircuitOptimization
+        var type: EncryptionType
+        var keySize: Int
+        var securityLevel: SecurityLevel
     }
     
-    public struct QuantumGate: Codable, Identifiable {
-        public let id = UUID()
-        var type: GateType
-        var qubits: [Int]
-        var parameters: [String: Float]
-        var layer: Int
-    }
-    
-    public enum GateType: String, CaseIterable, Codable {
-        case h = "Hadamard"
-        case x = "Pauli-X"
-        case y = "Pauli-Y"
-        case z = "Pauli-Z"
-        case cnot = "CNOT"
-        case swap = "SWAP"
-        case rx = "Rotation-X"
-        case ry = "Rotation-Y"
-        case rz = "Rotation-Z"
-        case u = "Unitary"
-        case measure = "Measurement"
-    }
-    
-    public struct CircuitOptimization: Codable {
-        var originalGates: Int
-        var optimizedGates: Int
-        var reduction: Float
-        var optimizationLevel: OptimizationLevel
-        var techniques: [String]
-    }
-    
-    public struct SimulationMetric: Codable, Identifiable {
-        public let id = UUID()
-        var simulationId: UUID
-        var metricName: String
-        var value: Float
-        var unit: String
-        var timestamp: Date
-    }
-    
-    public struct QuantumPerformance: Codable {
-        var overallPerformance: Float = 0.0
-        var qubitUtilization: Float = 0.0
-        var errorRates: [ErrorRate] = []
-        var coherenceTimes: [CoherenceTime] = []
-        var quantumVolume: Int = 0
-        var lastUpdated: Date = Date()
-    }
-    
-    public struct ErrorRate: Codable, Identifiable {
-        public let id = UUID()
-        var gateType: GateType
-        var errorRate: Float
-        var timestamp: Date
-        var qubitId: Int?
-    }
-    
-    public struct CoherenceTime: Codable, Identifiable {
-        public let id = UUID()
-        var t1: TimeInterval
-        var t2: TimeInterval
-        var qubitId: Int
-        var timestamp: Date
+    public enum SecurityLevel: String, Codable {
+        case standard = "standard"
+        case high = "high"
+        case quantum = "quantum"
     }
     
     // MARK: - Initialization
@@ -456,6 +388,7 @@ public class QuantumComputingSystem: ObservableObject {
     // MARK: - Public Methods
     
     /// Initialize quantum system
+    @available(macOS 10.15, *)
     public func initializeQuantumSystem() async throws {
         try await quantumManager.initializeSystem(config: quantumConfig)
         
@@ -466,6 +399,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Generate quantum random numbers
+    @available(macOS 10.15, *)
     public func generateQuantumRandomNumbers(_ count: Int) async throws -> [Int] {
         let numbers = try await quantumRandom.generateRandomNumbers(count: count)
         
@@ -475,6 +409,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Create quantum key
+    @available(macOS 10.15, *)
     public func createQuantumKey(_ keyType: KeyType, length: Int) async throws -> QuantumKey {
         let key = try await quantumCrypto.createKey(type: keyType, length: length)
         
@@ -487,7 +422,8 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Run quantum algorithm
-    public func runQuantumAlgorithm(_ algorithm: QuantumAlgorithm, parameters: [String: Any]) async throws -> AlgorithmResult {
+    @available(macOS 10.15, *)
+    public func runQuantumAlgorithm(_ algorithm: QuantumAlgorithm, parameters: [String: Any]) async throws -> QuantumAlgorithmResult {
         let result = try await quantumManager.runAlgorithm(algorithm: algorithm, parameters: parameters)
         
         // Update quantum algorithms
@@ -499,6 +435,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Start quantum simulation
+    @available(macOS 10.15, *)
     public func startQuantumSimulation(_ simulation: ActiveSimulation) async throws {
         try await quantumSimulator.startSimulation(simulation)
         
@@ -509,6 +446,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Optimize quantum circuit
+    @available(macOS 10.15, *)
     public func optimizeQuantumCircuit(_ circuit: QuantumCircuit) async throws -> QuantumCircuit {
         let optimizedCircuit = try await quantumOptimizer.optimizeCircuit(circuit)
         
@@ -518,6 +456,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Apply quantum error correction
+    @available(macOS 10.15, *)
     public func applyErrorCorrection(_ data: Data, code: ErrorCorrectionCode) async throws -> Data {
         let correctedData = try await quantumErrorCorrection.applyCorrection(data: data, code: code)
         
@@ -527,8 +466,9 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Establish quantum key distribution
-    public func establishQKD(_ protocol: QKDProtocol, partner: String) async throws -> QuantumKey {
-        let key = try await quantumKeyDistribution.establishKey(protocol: protocol, partner: partner)
+    @available(macOS 10.15, *)
+    public func establishQKD(_ `protocol`: QKDProtocol, partner: String) async throws -> QuantumKey {
+        let key = try await quantumKeyDistribution.establishKey(protocol: `protocol`, partner: partner)
         
         // Update quantum security
         await updateQuantumSecurity()
@@ -539,6 +479,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Run quantum machine learning
+    @available(macOS 10.15, *)
     public func runQuantumML(_ algorithm: QuantumAlgorithm, data: MLData) async throws -> MLResult {
         let result = try await quantumML.runAlgorithm(algorithm: algorithm, data: data)
         
@@ -548,8 +489,9 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Get quantum performance metrics
+    @available(macOS 10.15, *)
     public func getQuantumPerformance() async -> QuantumPerformance {
-        let performance = await quantumManager.getPerformance()
+        let performance = await quantumManager.getQuantumPerformance()
         
         print("Quantum performance metrics retrieved")
         
@@ -557,6 +499,7 @@ public class QuantumComputingSystem: ObservableObject {
     }
     
     /// Simulate quantum circuit
+    @available(macOS 10.15, *)
     public func simulateCircuit(_ circuit: QuantumCircuit, shots: Int) async throws -> SimulationResult {
         let result = try await quantumSimulator.simulateCircuit(circuit: circuit, shots: shots)
         
@@ -567,6 +510,7 @@ public class QuantumComputingSystem: ObservableObject {
     
     // MARK: - Private Methods
     
+    @available(macOS 10.15, *)
     private func setupQuantumComputingSystem() {
         // Configure system components
         quantumManager.configure(quantumConfig)
@@ -585,6 +529,7 @@ public class QuantumComputingSystem: ObservableObject {
         initializeQuantum()
     }
     
+    @available(macOS 10.15, *)
     private func setupQuantumMonitoring() {
         // Quantum status monitoring
         Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -602,6 +547,7 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func initializeQuantum() {
         Task {
             // Initialize quantum manager
@@ -617,6 +563,7 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func updateQuantumStatus() {
         Task {
             let status = await quantumManager.getQuantumStatus()
@@ -626,6 +573,7 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func updateQuantumAlgorithms() {
         Task {
             let algorithms = await quantumManager.getQuantumAlgorithms()
@@ -635,6 +583,7 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func updateQuantumSecurity() {
         Task {
             let security = await quantumCrypto.getQuantumSecurity()
@@ -644,6 +593,7 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func updateQuantumSimulation() {
         Task {
             let simulation = await quantumSimulator.getQuantumSimulation()
@@ -653,6 +603,7 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func updateQuantumPerformance() {
         Task {
             let performance = await quantumManager.getQuantumPerformance()
@@ -662,14 +613,17 @@ public class QuantumComputingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func initializeQuantumManager() async {
         await quantumManager.initialize()
     }
     
+    @available(macOS 10.15, *)
     private func initializeQuantumCrypto() async {
         await quantumCrypto.initialize()
     }
     
+    @available(macOS 10.15, *)
     private func initializeQuantumSimulator() async {
         await quantumSimulator.initialize()
     }
@@ -677,6 +631,7 @@ public class QuantumComputingSystem: ObservableObject {
 
 // MARK: - Supporting Classes
 
+@available(macOS 10.15, *)
 class QuantumManager {
     func configure(_ config: QuantumConfiguration) {
         // Configure quantum manager
@@ -690,36 +645,26 @@ class QuantumManager {
         // Simulate initializing quantum system
     }
     
-    func runAlgorithm(_ algorithm: QuantumAlgorithm, parameters: [String: Any]) async throws -> AlgorithmResult {
+    func runAlgorithm(_ algorithm: QuantumAlgorithm, parameters: [String: Any]) async throws -> QuantumAlgorithmResult {
         // Simulate running quantum algorithm
-        return AlgorithmResult(
-            algorithmId: algorithm.id,
-            result: QuantumResult(
-                type: .optimization,
-                value: "Optimized solution found",
-                confidence: 0.95,
-                classicalEquivalent: "Classical solution",
-                quantumAdvantage: 0.3
-            ),
+        return QuantumAlgorithmResult(
+            algorithmId: UUID(),
+            result: "Optimized solution found",
+            executionTime: 5.0,
+            qubitsUsed: 32,
             accuracy: 0.95,
-            runtime: 5.0,
-            qubitsUsed: algorithm.qubitsRequired,
-            errorRate: 0.01,
-            timestamp: Date(),
-            metadata: [:]
+            timestamp: Date()
         )
     }
     
     func getQuantumStatus() async -> QuantumStatus {
         // Simulate getting quantum status
         return QuantumStatus(
-            isAvailable: true,
-            quantumType: .simulation,
+            isConnected: true,
             qubitCount: 32,
             coherenceTime: 100.0,
-            errorRate: 0.01,
             temperature: 0.1,
-            lastUpdated: Date()
+            errorRate: 0.01
         )
     }
     
@@ -731,16 +676,15 @@ class QuantumManager {
     func getQuantumPerformance() async -> QuantumPerformance {
         // Simulate getting quantum performance
         return QuantumPerformance(
-            overallPerformance: 0.85,
-            qubitUtilization: 0.75,
-            errorRates: [],
-            coherenceTimes: [],
-            quantumVolume: 64,
-            lastUpdated: Date()
+            operationsPerSecond: 1000,
+            successRate: 0.99,
+            averageExecutionTime: 0.01,
+            qubitUtilization: 0.75
         )
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumCrypto {
     func configure(_ config: CryptoConfiguration) {
         // Configure quantum crypto
@@ -753,15 +697,9 @@ class QuantumCrypto {
     func createKey(type: KeyType, length: Int) async throws -> QuantumKey {
         // Simulate creating quantum key
         return QuantumKey(
-            keyId: "qk_" + UUID().uuidString.prefix(8),
+            keyData: Data(), // Placeholder for actual key data
             keyType: type,
-            keyLength: length,
-            generationMethod: .quantumRandom,
-            creationDate: Date(),
-            expirationDate: Date().addingTimeInterval(86400 * 30), // 30 days
-            isActive: true,
-            usageCount: 0,
-            securityLevel: .quantum
+            creationDate: Date()
         )
     }
     
@@ -771,6 +709,7 @@ class QuantumCrypto {
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumRandom {
     func configure(_ config: QuantumConfiguration) {
         // Configure quantum random
@@ -782,6 +721,7 @@ class QuantumRandom {
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumML {
     func configure(_ config: QuantumConfiguration) {
         // Configure quantum ML
@@ -798,6 +738,7 @@ class QuantumML {
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumSimulator {
     func configure(_ config: SimulationConfiguration) {
         // Configure quantum simulator
@@ -814,22 +755,25 @@ class QuantumSimulator {
     func simulateCircuit(_ circuit: QuantumCircuit, shots: Int) async throws -> SimulationResult {
         // Simulate quantum circuit simulation
         return SimulationResult(
-            simulationId: UUID(),
-            result: "Simulation completed successfully",
-            accuracy: 0.98,
-            confidence: 0.95,
-            classicalComparison: "Classical simulation result",
-            quantumAdvantage: 0.25,
+            circuitId: UUID(),
+            shots: shots,
+            results: [:],
+            executionTime: 0.1,
             timestamp: Date()
         )
     }
     
     func getQuantumSimulation() async -> QuantumSimulation {
         // Simulate getting quantum simulation
-        return QuantumSimulation()
+        return QuantumSimulation(
+            activeSimulations: [],
+            simulationResults: [],
+            maxSimulations: 10
+        )
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumOptimizer {
     func configure(_ config: QuantumConfiguration) {
         // Configure quantum optimizer
@@ -841,6 +785,7 @@ class QuantumOptimizer {
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumErrorCorrection {
     func configure(_ config: QuantumConfiguration) {
         // Configure quantum error correction
@@ -852,6 +797,7 @@ class QuantumErrorCorrection {
     }
 }
 
+@available(macOS 10.15, *)
 class QuantumKeyDistribution {
     func configure(_ config: CryptoConfiguration) {
         // Configure quantum key distribution
@@ -860,21 +806,16 @@ class QuantumKeyDistribution {
     func establishKey(protocol: QKDProtocol, partner: String) async throws -> QuantumKey {
         // Simulate establishing quantum key distribution
         return QuantumKey(
-            keyId: "qkd_" + UUID().uuidString.prefix(8),
+            keyData: Data(), // Placeholder for actual key data
             keyType: .quantum,
-            keyLength: 256,
-            generationMethod: .quantumKeyDistribution,
-            creationDate: Date(),
-            expirationDate: Date().addingTimeInterval(86400 * 7), // 7 days
-            isActive: true,
-            usageCount: 0,
-            securityLevel: .quantum
+            creationDate: Date()
         )
     }
 }
 
 // MARK: - Supporting Data Structures
 
+@available(macOS 10.15, *)
 public struct QuantumConfiguration {
     var qubitCount: Int = 32
     var errorThreshold: Float = 0.01
@@ -883,13 +824,130 @@ public struct QuantumConfiguration {
     var optimizationLevel: OptimizationLevel = .intermediate
 }
 
+@available(macOS 10.15, *)
+// Add missing type definitions
+enum AlgorithmStatus: String, Codable {
+    case running = "running"
+    case completed = "completed"
+    case failed = "failed"
+    case paused = "paused"
+}
+
+struct QuantumAlgorithm: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let type: String
+    let description: String
+    let parameters: [String: String]
+}
+
+struct QuantumAlgorithmResult: Codable {
+    let algorithmId: UUID
+    let result: String
+    let executionTime: TimeInterval
+    let qubitsUsed: Int
+    let accuracy: Float
+}
+
+struct QuantumStatus: Codable {
+    let isConnected: Bool
+    let qubits: Int
+    let coherenceTime: TimeInterval
+    let temperature: Float
+}
+
+struct QuantumAlgorithms: Codable {
+    let algorithms: [QuantumAlgorithm]
+    let totalAlgorithms: Int
+    let availableAlgorithms: Int
+}
+
+struct QuantumPerformance: Codable {
+    let qubits: Int
+    let coherenceTime: TimeInterval
+    let gateFidelity: Float
+    let errorRate: Float
+}
+
+struct QuantumKey: Codable, Identifiable {
+    let id = UUID()
+    let key: String
+    let type: KeyType
+    let length: Int
+    let createdAt: Date
+}
+
+enum KeyType: String, Codable {
+    case symmetric = "symmetric"
+    case asymmetric = "asymmetric"
+    case quantum = "quantum"
+}
+
+struct QuantumSecurity: Codable {
+    let encryptionLevel: String
+    let keyDistribution: Bool
+    let threatDetection: Bool
+    let lastAudit: Date
+}
+
+@available(macOS 10.15, *)
+struct ActiveSimulation: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let type: String
+    let status: AlgorithmStatus
+    let startTime: Date
+}
+
+struct SimulationResult: Codable {
+    let simulationId: UUID
+    let result: String
+    let executionTime: TimeInterval
+    let accuracy: Float
+}
+
+struct QuantumCircuit: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let gates: [String]
+    let qubits: Int
+    let depth: Int
+}
+
+struct QuantumSimulation: Codable {
+    let activeSimulations: [ActiveSimulation]
+    let completedSimulations: [SimulationResult]
+    let totalSimulations: Int
+}
+
+enum QKDProtocol: String, Codable {
+    case bb84 = "bb84"
+    case ekert91 = "ekert91"
+    case bbm92 = "bbm92"
+}
+
+enum EncryptionType: String, Codable {
+    case lattice = "lattice"
+    case code = "code"
+    case multivariate = "multivariate"
+}
+
+enum OptimizationLevel: String, Codable {
+    case basic = "basic"
+    case intermediate = "intermediate"
+    case advanced = "advanced"
+    case expert = "expert"
+}
+
+@available(macOS 10.15, *)
 public struct CryptoConfiguration {
     var keySize: Int = 256
     var algorithm: EncryptionType = .lattice
-    var securityLevel: SecurityLevel = .quantum
+    var securityLevel: QuantumComputingSystem.SecurityLevel = .quantum
     var keyRotationPeriod: TimeInterval = 86400 * 30 // 30 days
 }
 
+@available(macOS 10.15, *)
 public struct SimulationConfiguration {
     var maxQubits: Int = 64
     var maxDepth: Int = 1000
@@ -897,6 +955,7 @@ public struct SimulationConfiguration {
     var optimizationLevel: OptimizationLevel = .advanced
 }
 
+@available(macOS 10.15, *)
 public struct ErrorCorrectionCode: Codable {
     let name: String
     let type: String
@@ -904,12 +963,14 @@ public struct ErrorCorrectionCode: Codable {
     let qubits: Int
 }
 
+@available(macOS 10.15, *)
 public struct MLData: Codable {
     let features: [[Float]]
     let labels: [String]
     let metadata: [String: String]
 }
 
+@available(macOS 10.15, *)
 public struct MLResult: Codable {
     let accuracy: Float
     let predictions: [String]

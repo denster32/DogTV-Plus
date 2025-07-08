@@ -9,7 +9,7 @@ class APIDocumentationSystem {
     private let docCGenerator = SwiftDocCGenerator()
     private let interfaceDocumenter = InterfaceDocumenter()
     private let architectureDiagrammer = ArchitectureDiagrammer()
-    private let troubleshootingGuide = TroubleshootingGuide()
+    private let troubleshootingGuide = APITroubleshootingGuide()
     private let documentationUpdater = DocumentationUpdater()
     
     // MARK: - Public Interface
@@ -507,17 +507,68 @@ class ArchitectureDiagrammer {
 }
 
 // MARK: - Troubleshooting Guide
-class TroubleshootingGuide {
+class APITroubleshootingGuide {
     
     /// Generate comprehensive troubleshooting guides
-    func generateAllGuides() async throws -> TroubleshootingDocumentation {
+    func generateTroubleshootingGuides() async throws -> TroubleshootingDocumentation {
         print("🔧 Generating troubleshooting guides...")
         
-        let commonIssues = try await generateCommonIssuesGuide()
-        let performanceIssues = try await generatePerformanceIssuesGuide()
-        let audioIssues = try await generateAudioIssuesGuide()
-        let visualIssues = try await generateVisualIssuesGuide()
-        let behaviorIssues = try await generateBehaviorIssuesGuide()
+        let commonIssues = [
+            TroubleshootingGuide(
+                title: "App Not Starting",
+                description: "Common issues with app startup",
+                causes: ["Corrupted cache", "Insufficient memory", "Network issues"],
+                solutions: ["Clear app cache", "Restart device", "Check network connection"],
+                severity: .medium
+            ),
+            TroubleshootingGuide(
+                title: "Visual Content Not Loading",
+                description: "Issues with procedural content generation",
+                causes: ["GPU memory full", "Shader compilation error", "Metal framework issue"],
+                solutions: ["Restart app", "Update system", "Check device compatibility"],
+                severity: .high
+            )
+        ]
+        
+        let performanceIssues = [
+            TroubleshootingGuide(
+                title: "Low Frame Rate",
+                description: "Performance optimization issues",
+                causes: ["High GPU usage", "Background processes", "Thermal throttling"],
+                solutions: ["Close other apps", "Enable performance mode", "Check device temperature"],
+                severity: .medium
+            )
+        ]
+        
+        let audioIssues = [
+            TroubleshootingGuide(
+                title: "Audio Not Playing",
+                description: "Audio system issues",
+                causes: ["Audio session interrupted", "Volume muted", "Audio driver issue"],
+                solutions: ["Check volume settings", "Restart audio session", "Update audio drivers"],
+                severity: .low
+            )
+        ]
+        
+        let visualIssues = [
+            TroubleshootingGuide(
+                title: "Visual Distortion",
+                description: "Rendering and display issues",
+                causes: ["Shader error", "Display scaling issue", "GPU driver problem"],
+                solutions: ["Update graphics drivers", "Check display settings", "Restart rendering pipeline"],
+                severity: .high
+            )
+        ]
+        
+        let behaviorIssues = [
+            TroubleshootingGuide(
+                title: "Unexpected Behavior",
+                description: "App behavior issues",
+                causes: ["Configuration error", "State corruption", "Memory leak"],
+                solutions: ["Reset app settings", "Clear app data", "Reinstall app"],
+                severity: .medium
+            )
+        ]
         
         return TroubleshootingDocumentation(
             commonIssues: commonIssues,
@@ -525,190 +576,8 @@ class TroubleshootingGuide {
             audioIssues: audioIssues,
             visualIssues: visualIssues,
             behaviorIssues: behaviorIssues,
-            totalGuides: 5
+            totalGuides: commonIssues.count + performanceIssues.count + audioIssues.count + visualIssues.count + behaviorIssues.count
         )
-    }
-    
-    private func generateCommonIssuesGuide() async throws -> [TroubleshootingGuide] {
-        return [
-            TroubleshootingGuide(
-                title: "App Won't Launch",
-                description: "Common issues preventing the app from launching",
-                issues: [
-                    TroubleshootingIssue(
-                        problem: "App crashes immediately on launch",
-                        causes: ["Corrupted app data", "Insufficient storage", "System compatibility issue"],
-                        solutions: [
-                            "Restart Apple TV",
-                            "Delete and reinstall app",
-                            "Check available storage space",
-                            "Update tvOS to latest version"
-                        ],
-                        severity: .critical
-                    ),
-                    TroubleshootingIssue(
-                        problem: "App freezes during initialization",
-                        causes: ["Large content library", "Network connectivity issues", "Memory pressure"],
-                        solutions: [
-                            "Check network connection",
-                            "Restart Apple TV",
-                            "Clear app cache",
-                            "Reduce content library size"
-                        ],
-                        severity: .high
-                    )
-                ]
-            ),
-            TroubleshootingGuide(
-                title: "Settings Not Saving",
-                description: "Issues with settings persistence",
-                issues: [
-                    TroubleshootingIssue(
-                        problem: "Settings reset after app restart",
-                        causes: ["Storage permission issues", "Corrupted settings file", "iCloud sync conflicts"],
-                        solutions: [
-                            "Check storage permissions",
-                            "Reset app settings",
-                            "Disable iCloud sync temporarily",
-                            "Contact support if issue persists"
-                        ],
-                        severity: .medium
-                    )
-                ]
-            )
-        ]
-    }
-    
-    private func generatePerformanceIssuesGuide() async throws -> [TroubleshootingGuide] {
-        return [
-            TroubleshootingGuide(
-                title: "Performance Issues",
-                description: "Issues affecting app performance",
-                issues: [
-                    TroubleshootingIssue(
-                        problem: "Low frame rate or stuttering",
-                        causes: ["High CPU usage", "Memory pressure", "Thermal throttling", "Network issues"],
-                        solutions: [
-                            "Close other apps",
-                            "Restart Apple TV",
-                            "Check network connection",
-                            "Reduce content quality settings"
-                        ],
-                        severity: .high
-                    ),
-                    TroubleshootingIssue(
-                        problem: "App becomes unresponsive",
-                        causes: ["Memory leak", "Infinite loop", "Resource exhaustion"],
-                        solutions: [
-                            "Force quit and restart app",
-                            "Restart Apple TV",
-                            "Check for app updates",
-                            "Contact support with crash logs"
-                        ],
-                        severity: .critical
-                    )
-                ]
-            )
-        ]
-    }
-    
-    private func generateAudioIssuesGuide() async throws -> [TroubleshootingGuide] {
-        return [
-            TroubleshootingGuide(
-                title: "Audio Issues",
-                description: "Problems with audio playback",
-                issues: [
-                    TroubleshootingIssue(
-                        problem: "No audio output",
-                        causes: ["Audio system disabled", "Volume muted", "Audio routing issues"],
-                        solutions: [
-                            "Check Apple TV audio settings",
-                            "Verify volume is not muted",
-                            "Test with other apps",
-                            "Restart Apple TV"
-                        ],
-                        severity: .high
-                    ),
-                    TroubleshootingIssue(
-                        problem: "Audio quality issues",
-                        causes: ["Low bitrate content", "Network bandwidth issues", "Audio processing errors"],
-                        solutions: [
-                            "Check network connection",
-                            "Adjust audio quality settings",
-                            "Restart app",
-                            "Update to latest version"
-                        ],
-                        severity: .medium
-                    )
-                ]
-            )
-        ]
-    }
-    
-    private func generateVisualIssuesGuide() async throws -> [TroubleshootingGuide] {
-        return [
-            TroubleshootingGuide(
-                title: "Visual Issues",
-                description: "Problems with visual content",
-                issues: [
-                    TroubleshootingIssue(
-                        problem: "Content not displaying",
-                        causes: ["Content loading failure", "Rendering errors", "Display settings"],
-                        solutions: [
-                            "Check network connection",
-                            "Restart app",
-                            "Verify display settings",
-                            "Clear content cache"
-                        ],
-                        severity: .high
-                    ),
-                    TroubleshootingIssue(
-                        problem: "Poor visual quality",
-                        causes: ["Low resolution content", "Network bandwidth", "Display settings"],
-                        solutions: [
-                            "Check network connection",
-                            "Adjust quality settings",
-                            "Verify display resolution",
-                            "Update to latest version"
-                        ],
-                        severity: .medium
-                    )
-                ]
-            )
-        ]
-    }
-    
-    private func generateBehaviorIssuesGuide() async throws -> [TroubleshootingGuide] {
-        return [
-            TroubleshootingGuide(
-                title: "Behavior Analysis Issues",
-                description: "Problems with behavior detection",
-                issues: [
-                    TroubleshootingIssue(
-                        problem: "Behavior not being detected",
-                        causes: ["Camera access denied", "Poor lighting", "Camera positioning", "Detection algorithm issues"],
-                        solutions: [
-                            "Check camera permissions",
-                            "Improve lighting conditions",
-                            "Reposition Apple TV",
-                            "Restart behavior analysis"
-                        ],
-                        severity: .medium
-                    ),
-                    TroubleshootingIssue(
-                        problem: "Incorrect behavior detection",
-                        causes: ["Algorithm training issues", "Environmental factors", "Camera quality"],
-                        solutions: [
-                            "Calibrate detection system",
-                            "Improve camera positioning",
-                            "Adjust lighting",
-                            "Contact support for recalibration"
-                        ],
-                        severity: .medium
-                    )
-                ]
-            )
-        ]
     }
 }
 
@@ -927,17 +796,12 @@ struct TroubleshootingDocumentation {
 struct TroubleshootingGuide {
     let title: String
     let description: String
-    let issues: [TroubleshootingIssue]
-}
-
-struct TroubleshootingIssue {
-    let problem: String
     let causes: [String]
     let solutions: [String]
-    let severity: IssueSeverity
+    let severity: APIIssueSeverity
 }
 
-enum IssueSeverity {
+enum APIIssueSeverity {
     case low
     case medium
     case high
@@ -946,17 +810,15 @@ enum IssueSeverity {
 
 struct DocumentationExport {
     let documentation: DocumentationResult
-    let exportFormat: ExportFormat
+    let exportFormat: DocumentationExportFormat
     let exportDate: Date
     let includeSourceCode: Bool
     let includeDiagrams: Bool
 }
 
-enum ExportFormat {
+enum DocumentationExportFormat {
     case html
     case pdf
-    case markdown
-    case json
 }
 
 struct DocumentationValidation {

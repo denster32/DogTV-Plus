@@ -30,6 +30,7 @@ import Combine
  * - Reward redemption
  * - Progress visualization
  */
+@available(macOS 10.15, *)
 public class GamificationSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -641,6 +642,94 @@ public class GamificationSystem: ObservableObject {
     }
 }
 
+// MARK: - Missing Type Definitions
+
+struct Achievement: Codable, Identifiable {
+    let id: String
+    let title: String
+    let description: String
+    let type: AchievementType
+    let points: Int
+    let unlockedAt: Date?
+}
+
+enum AchievementType: String, Codable {
+    case daily = "daily"
+    case weekly = "weekly"
+    case milestone = "milestone"
+    case special = "special"
+}
+
+struct UserProgress: Codable {
+    let level: Int
+    let experience: Int
+    let totalPoints: Int
+    let achievements: [Achievement]
+    let lastActivity: Date
+}
+
+struct Challenge: Codable, Identifiable {
+    let id: String
+    let title: String
+    let description: String
+    let type: ChallengeType
+    let goal: Int
+    let reward: Reward
+    let startDate: Date
+    let endDate: Date
+    let difficulty: ChallengeDifficulty
+    let isActive: Bool
+}
+
+enum ChallengeType: String, Codable {
+    case daily = "daily"
+    case weekly = "weekly"
+    case special = "special"
+}
+
+enum ChallengeDifficulty: String, Codable {
+    case easy = "easy"
+    case medium = "medium"
+    case hard = "hard"
+}
+
+struct Reward: Codable, Identifiable {
+    let id: String
+    let title: String
+    let description: String
+    let type: RewardType
+    let value: Int
+    let icon: String
+}
+
+enum RewardType: String, Codable {
+    case points = "points"
+    case badge = "badge"
+    case unlock = "unlock"
+}
+
+struct Leaderboard: Codable {
+    let title: String
+    let type: LeaderboardType
+    let entries: [LeaderboardEntry]
+}
+
+enum LeaderboardType: String, Codable {
+    case global = "global"
+    case friends = "friends"
+    case weekly = "weekly"
+    case monthly = "monthly"
+}
+
+struct LeaderboardEntry: Codable, Identifiable {
+    let id: String
+    let username: String
+    let score: Int
+    let rank: Int
+}
+
+// Remove duplicate EngagementMetrics - it's already defined in SocialSharingSystem
+
 // MARK: - Supporting Classes
 
 class AchievementManager {
@@ -764,7 +853,7 @@ public struct UserActivity: Codable {
     var type: ActivityType
     var timestamp: Date
     var duration: TimeInterval?
-    var metadata: [String: Any]
+    var metadata: [String: String]
 }
 
 public enum ActivityType: String, CaseIterable, Codable {

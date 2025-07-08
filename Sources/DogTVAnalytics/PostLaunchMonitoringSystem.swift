@@ -304,7 +304,7 @@ class PerformanceMonitor {
                 "User interactions",
                 "Screen transitions",
                 "Data loading",
-                "Video playback",
+                "Procedural content generation",
                 "Audio processing"
             ],
             profiling: "On-demand",

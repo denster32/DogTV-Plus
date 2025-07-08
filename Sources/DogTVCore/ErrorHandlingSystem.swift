@@ -25,6 +25,7 @@ import Combine
  * - System errors (memory, performance, crashes)
  * - Security errors (authentication, authorization, privacy)
  */
+@available(macOS 10.15, *)
 public class ErrorHandlingSystem: ObservableObject {
     
     // MARK: - Published Properties
@@ -62,10 +63,9 @@ public class ErrorHandlingSystem: ObservableObject {
         public let id = UUID()
         var errorType: ErrorType
         var severity: ErrorSeverity
-        var message: String
         var description: String
         var timestamp: Date
-        var context: [String: Any]
+        var context: [String: String]
         var stackTrace: String?
         var isResolved: Bool = false
         var resolutionTime: Date?
@@ -337,7 +337,7 @@ public class ErrorHandlingSystem: ObservableObject {
     
     /// Get error prevention recommendations
     public func getErrorPreventionRecommendations() -> [String] {
-        return preventionManager.getRecommendations(based: on: errorAnalytics)
+        return preventionManager.getRecommendations(errorAnalytics)
     }
     
     // MARK: - Private Methods
@@ -391,14 +391,15 @@ public class ErrorHandlingSystem: ObservableObject {
         return errorInfo.severity <= .medium && errorConfig.userNotificationsEnabled
     }
     
+    @available(macOS 10.15, *)
     private func notifyUser(about errorInfo: ErrorInfo) async {
         let notification = UserNotification(
             title: "Error: \(errorInfo.errorType.rawValue)",
-            message: getUserFriendlyMessage(for: errorInfo),
+            message: errorInfo.description,
             type: .error,
             severity: errorInfo.severity,
             timestamp: Date(),
-            actionRequired: errorInfo.severity == .critical
+            actionRequired: errorInfo.recoverySteps.count > 0
         )
         
         await MainActor.run {
@@ -427,6 +428,7 @@ public class ErrorHandlingSystem: ObservableObject {
         return updatedStep
     }
     
+    @available(macOS 10.15, *)
     private func updateErrorStatus(after recovery: RecoveryStatus) {
         // Update error status based on recovery results
         let successfulSteps = recovery.recoverySteps.filter { $0.status == .completed }
@@ -451,6 +453,7 @@ public class ErrorHandlingSystem: ObservableObject {
         }
     }
     
+    @available(macOS 10.15, *)
     private func checkForNewErrors() {
         Task {
             let newErrors = await errorCatcher.checkForNewErrors()
@@ -482,29 +485,9 @@ class ErrorCatcher {
     }
 }
 
-class ErrorAnalyzer {
-    func configure(_ config: ErrorConfiguration) {
-        // Configure error analyzer
-    }
-    
-    func analyzeError(_ error: Error, context: [String: Any]) async -> ErrorInfo {
-        // Analyze error and create ErrorInfo
-        return ErrorInfo(
-            errorType: .unknown,
-            severity: .medium,
-            message: error.localizedDescription,
-            description: "Error analysis completed",
-            timestamp: Date(),
-            context: context
-        )
-    }
-    
-    func getErrorAnalytics() async -> ErrorAnalytics {
-        // Get error analytics
-        return ErrorAnalytics()
-    }
-}
 
+
+@available(macOS 10.15, *)
 class RecoveryManager {
     func configure(_ config: RecoveryConfiguration) {
         // Configure recovery manager
@@ -616,4 +599,93 @@ public struct ErrorStatistics {
     let resolvedErrors: Int
     let averageResolutionTime: TimeInterval
     let errorTrends: [ErrorTrend]
+}
+
+// Add missing type definitions
+enum ErrorType: String, Codable {
+    case network = "network"
+    case timeout = "timeout"
+    case validation = "validation"
+    case authentication = "authentication"
+    case authorization = "authorization"
+    case database = "database"
+    case fileSystem = "fileSystem"
+    case unknown = "unknown"
+}
+
+enum ErrorSeverity: String, Codable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case critical = "critical"
+}
+
+struct RecoveryStep: Codable {
+    let step: String
+    var status: RecoveryStepStatus
+    var duration: TimeInterval
+    let timestamp: Date
+}
+
+enum RecoveryStepStatus: String, Codable {
+    case pending = "pending"
+    case running = "running"
+    case completed = "completed"
+    case failed = "failed"
+}
+
+struct RecoveryStatus: Codable {
+    let recoverySteps: [RecoveryStep]
+    let recoverySuccessRate: Float
+    let lastUpdated: Date
+    
+    init() {
+        self.recoverySteps = []
+        self.recoverySuccessRate = 0.0
+        self.lastUpdated = Date()
+    }
+}
+
+struct ErrorAnalytics: Codable {
+    let totalErrors: Int
+    let errorTypes: [String: Int]
+    let averageResolutionTime: TimeInterval
+    let trends: [ErrorTrend]
+    
+    init() {
+        self.totalErrors = 0
+        self.errorTypes = [:]
+        self.averageResolutionTime = 0.0
+        self.trends = []
+    }
+}
+
+struct ErrorTrend: Codable {
+    let period: String
+    let errorCount: Int
+    let trend: TrendDirection
+}
+
+enum TrendDirection: String, Codable {
+    case increasing = "increasing"
+    case decreasing = "decreasing"
+    case stable = "stable"
+}
+
+struct RecoveryStrategy: Codable {
+    let name: String
+    let description: String
+    let steps: [String]
+}
+
+// Add ErrorInfo struct definition
+struct ErrorInfo: Codable, Identifiable {
+    public let id = UUID()
+    var errorType: ErrorType
+    var severity: ErrorSeverity
+    var description: String
+    var timestamp: Date
+    var context: [String: String]
+    var stackTrace: String?
+    var isResolved: Bool = false
 } 

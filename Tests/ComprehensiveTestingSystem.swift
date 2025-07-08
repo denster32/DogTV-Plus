@@ -516,7 +516,7 @@ public class ComprehensiveTestingSystem: ObservableObject {
         # Test Cases
         
         ## Unit Tests
-        - VideoPlayerSystem tests
+        - ProceduralContentGenerator tests
         - ContentDeliverySystem tests
         - UserManagementSystem tests
         - BehaviorAnalysisSystem tests
