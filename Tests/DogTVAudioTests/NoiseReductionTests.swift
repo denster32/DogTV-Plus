@@ -1,5 +1,8 @@
+import Foundation
 import XCTest
+
 import AVFoundation
+
 @testable import DogTVAudio
 
 final class NoiseReductionTests: XCTestCase {
@@ -32,7 +35,10 @@ final class NoiseReductionTests: XCTestCase {
 
     func testSpectralNoiseReduction() {
         // Create a test audio buffer
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else {
+            XCTFail("Failed to create audio format")
+            return
+        }
         let frameCount: AVAudioFrameCount = 1024
 
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
@@ -60,7 +66,10 @@ final class NoiseReductionTests: XCTestCase {
 
     func testLearnNoiseProfile() {
         // Create a test audio buffer with noise
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else {
+            XCTFail("Failed to create audio format")
+            return
+        }
         let frameCount: AVAudioFrameCount = 1024
 
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
@@ -84,7 +93,10 @@ final class NoiseReductionTests: XCTestCase {
 
     func testAdaptiveNoiseReduction() {
         // Create a test audio buffer
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else {
+            XCTFail("Failed to create audio format")
+            return
+        }
         let frameCount: AVAudioFrameCount = 1024
 
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
@@ -108,7 +120,10 @@ final class NoiseReductionTests: XCTestCase {
 
     func testMonitorNoiseLevel() {
         // Create a test audio buffer
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else {
+            XCTFail("Failed to create audio format")
+            return
+        }
         let frameCount: AVAudioFrameCount = 1024
 
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
@@ -133,7 +148,10 @@ final class NoiseReductionTests: XCTestCase {
 
     func testAssessNoiseReductionQuality() {
         // Create original and processed test buffers
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else {
+            XCTFail("Failed to create audio format")
+            return
+        }
         let frameCount: AVAudioFrameCount = 1024
 
         guard let originalBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),

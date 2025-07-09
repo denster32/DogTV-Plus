@@ -1,6 +1,8 @@
 import Foundation
+
 import AVFoundation
 import Combine
+
 import DogTVCore
 
 /// Provides audio analytics and usage tracking capabilities.
@@ -23,9 +25,15 @@ public class AudioAnalytics: ObservableObject {
     private var scenePlayCounts: [SceneType: Int] = [:]
     private var sessionData: [AudioSessionData] = []
     private var cancellables = Set<AnyCancellable>()
+    private let analyticsService: AnalyticsService
 
     // MARK: - Initialization
-    public init() {
+    public convenience init() {
+        self.init(analyticsService: CoreAnalyticsService.shared)
+    }
+
+    public init(analyticsService: AnalyticsService) {
+        self.analyticsService = analyticsService
         setupAnalytics()
     }
 
@@ -216,7 +224,7 @@ public class AudioAnalytics: ObservableObject {
         print("Audio Event: \(event)")
 
         // Here you would typically send to analytics service
-        // For now, we'll just print to console
+        analyticsService.logEvent(event.toAnalyticsEvent())
     }
 
     // MARK: - Private Methods
@@ -283,7 +291,7 @@ public struct AudioSessionData: Codable {
     var qualityScore: Float
 }
 
-/// Comprehensive usage statistics.
+/// Represents comprehensive audio usage statistics.
 public struct AudioUsageStatistics {
     let totalListeningTime: TimeInterval
     let totalSessions: Int
@@ -296,8 +304,8 @@ public struct AudioUsageStatistics {
     let lastSessionDate: Date?
 }
 
-/// Data for analytics export.
-private struct AudioAnalyticsExportData: Codable {
+/// Represents the data structure for exporting analytics.
+struct AudioAnalyticsExportData: Codable {
     let sessionData: [AudioSessionData]
     let scenePlayCounts: [SceneType: Int]
     let totalListeningTime: TimeInterval
@@ -307,8 +315,8 @@ private struct AudioAnalyticsExportData: Codable {
     let exportDate: Date
 }
 
-/// Data for analytics storage.
-private struct AudioAnalyticsStorageData: Codable {
+/// Represents the data structure for storing analytics.
+struct AudioAnalyticsStorageData: Codable {
     let totalListeningTime: TimeInterval
     let scenePlayCounts: [SceneType: Int]
     let averageVolume: Float
@@ -316,14 +324,29 @@ private struct AudioAnalyticsStorageData: Codable {
     let audioQualityScore: Float
 }
 
-/// Audio events for tracking.
-public enum AudioEvent {
+/// Represents different types of audio events.
+enum AudioEvent {
     case sessionStarted(scene: SceneType)
     case sessionEnded(duration: TimeInterval)
     case sessionPaused
     case sessionResumed
-    case volumeChanged(from: Float, to: Float)
-    case sceneChanged(from: SceneType, to: SceneType)
-    case audioError(Error)
-    case qualityIssue(score: Float)
+    case volumeChanged(level: Float)
+    case qualityChanged(score: Float)
+
+    func toAnalyticsEvent() -> AnalyticsEvent {
+        switch self {
+        case .sessionStarted(let scene):
+            return .sessionStart(attributes: ["scene": scene.rawValue])
+        case .sessionEnded(let duration):
+            return .sessionEnd(attributes: ["duration": duration])
+        case .sessionPaused:
+            return .event(name: "audio_session_paused", attributes: nil)
+        case .sessionResumed:
+            return .event(name: "audio_session_resumed", attributes: nil)
+        case .volumeChanged(let level):
+            return .event(name: "volume_changed", attributes: ["level": level])
+        case .qualityChanged(let score):
+            return .event(name: "quality_changed", attributes: ["score": score])
+        }
+    }
 }

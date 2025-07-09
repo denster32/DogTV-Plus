@@ -1,19 +1,21 @@
+import Foundation
+
+import CoreGraphics
 import Metal
 import MetalKit
-import Foundation
-import CoreGraphics
 import simd
+
 import DogTVCore
 
 /// ProceduralContentGenerator: Real-time visual generation for canine entertainment
 @available(iOS 17.0, tvOS 17.0, macOS 10.15, *)
 public class ProceduralContentGenerator: ObservableObject {
 
-    // MARK: - Metal Components
+// MARK: - Metal Components
     private let device: MTLDevice
     private let commandQueue: MTLCommandQueue
 
-    // MARK: - Scene Properties
+// MARK: - Scene Properties
     @Published public var currentScene: SceneType = .ocean
     @Published public var sceneIntensity: Float = 0.5
     @Published public var colorTemperature: Float = 0.5
@@ -25,10 +27,13 @@ public class ProceduralContentGenerator: ObservableObject {
             fatalError("Metal is not supported on this device")
         }
         self.device = device
-        self.commandQueue = device.makeCommandQueue()!
+        guard let commandQueue = device.makeCommandQueue() else {
+            fatalError("Failed to create command queue")
+        }
+        self.commandQueue = commandQueue
     }
 
-    // MARK: - Generation Methods
+// MARK: - Generation Methods
 
     /// Start generating procedural content
     public func startGeneration(scene: SceneType) {
@@ -75,7 +80,7 @@ public class ProceduralContentGenerator: ObservableObject {
         }
     }
 
-    // MARK: - Scene Generation Methods
+// MARK: - Scene Generation Methods
 
     private func generateOceanWaves() {
         // Generate ocean wave patterns

@@ -23,7 +23,7 @@
 - [ ] **Voice-over Localization** for accessibility
 - [ ] **Keyboard Input Localization**
 
-#### **Agent Assignment:** Agent 2 (Core Systems) + Agent 3 (UI)
+#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
 ```swift
 // Required localizations structure:
 Resources/Localizations/
@@ -61,7 +61,7 @@ Resources/Localizations/
 - [ ] **Screen Time** parental controls
 - [ ] **App Clips** for quick demos
 
-#### **Agent Assignment:** Agent 2 (Core Systems) + Agent 3 (UI)
+#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
 
 ---
 
@@ -83,7 +83,7 @@ Resources/Localizations/
 - [ ] **Certificate Pinning**
 - [ ] **Runtime Application Self-Protection (RASP)**
 
-#### **Agent Assignment:** Agent 1 (Security Lead) + Agent 5 (Validation)
+#### **Agent Assignment:** Agent 6 (Security Lead) + Agent 7 (Infrastructure) + Agent 5 (Validation)
 
 ---
 
@@ -128,7 +128,7 @@ Resources/Localizations/
 - [ ] **Retention Analysis** automation
 - [ ] **Competitive Intelligence** integration
 
-#### **Agent Assignment:** Agent 2 (Analytics Lead) + Agent 5 (Monitoring)
+#### **Agent Assignment:** Agent 8 (Business Analytics Lead) + Agent 7 (Infrastructure) + Agent 5 (Monitoring)
 
 ---
 
@@ -148,7 +148,7 @@ Resources/Localizations/
 - [ ] **Bandwidth Detection** and adaptation
 - [ ] **Network Quality** optimization
 
-#### **Agent Assignment:** Agent 1 (Infrastructure) + Agent 4 (Audio/Video)
+#### **Agent Assignment:** Agent 7 (Infrastructure Lead) + Agent 4 (Audio/Video) + Agent 1 (Build Systems)
 
 ---
 
@@ -171,7 +171,7 @@ Resources/Localizations/
 - [ ] **Reviews and Ratings** prompts
 - [ ] **Feedback Collection** system
 
-#### **Agent Assignment:** Agent 2 (Core Systems) + Agent 3 (UI)
+#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
 
 ---
 
@@ -234,7 +234,7 @@ Resources/Localizations/
 - [ ] **Tax Calculation** by region
 - [ ] **Refund Automation**
 
-#### **Agent Assignment:** Agent 2 (Business Logic) + Agent 1 (Infrastructure)
+#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 7 (Infrastructure) + Agent 2 (Core Systems)
 
 ---
 
@@ -255,7 +255,7 @@ Resources/Localizations/
 - [ ] **Log Aggregation** (ELK Stack)
 - [ ] **Distributed Tracing** (Jaeger)
 
-#### **Agent Assignment:** Agent 1 (DevOps Lead) + Agent 5 (Monitoring)
+#### **Agent Assignment:** Agent 7 (DevOps Lead) + Agent 1 (Build Systems) + Agent 5 (Monitoring)
 
 ---
 
@@ -276,7 +276,7 @@ Resources/Localizations/
 - [ ] **Awards Submission** automation
 - [ ] **Press Kit** creation
 
-#### **Agent Assignment:** Agent 3 (Visual Lead) + Agent 2 (Content)
+#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 3 (Visual Lead) + Agent 2 (Content)
 
 ---
 
@@ -297,7 +297,7 @@ Resources/Localizations/
 - [ ] **Accessibility Compliance** legal
 - [ ] **International Trade** compliance
 
-#### **Agent Assignment:** Agent 1 (Compliance) + Agent 5 (Validation)
+#### **Agent Assignment:** Agent 6 (Security & Compliance Lead) + Agent 8 (Business) + Agent 5 (Validation)
 
 ---
 

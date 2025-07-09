@@ -1,4 +1,5 @@
 import Foundation
+
 import AVFoundation
 
 /// Manages synchronization between audio and visual components.

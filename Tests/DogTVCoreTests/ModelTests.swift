@@ -1,4 +1,6 @@
+import Foundation
 import XCTest
+
 @testable import DogTVCore
 
 final class ModelTests: XCTestCase {
@@ -53,8 +55,11 @@ final class ModelTests: XCTestCase {
         XCTAssertThrowsError(try AudioSettings(volume: 1.1, isEnabled: true, frequencyRange: .low, includeNatureSounds: false, equalizerSettings: .default))
 
         // Test invalid equalizer settings
-        let invalidEQ = try? EqualizerSettings(lowGain: 20.0, midGain: 0, highGain: 0)
-        XCTAssertThrowsError(try AudioSettings(volume: 0.5, isEnabled: true, frequencyRange: .low, includeNatureSounds: false, equalizerSettings: invalidEQ!))
+        if let invalidEQ = try? EqualizerSettings(lowGain: 20.0, midGain: 0, highGain: 0) {
+            XCTAssertThrowsError(try AudioSettings(volume: 0.5, isEnabled: true, frequencyRange: .low, includeNatureSounds: false, equalizerSettings: invalidEQ))
+        } else {
+            XCTFail("Failed to create invalid EqualizerSettings for testing.")
+        }
     }
 
     // MARK: - UserPreferences Model Tests

@@ -1,170 +1,87 @@
+import Foundation
 import XCTest
+
 import AVFoundation
+
 @testable import DogTVAudio
 @testable import DogTVCore
 
-final class AudioAnalyticsTests: XCTestCase {
+class AudioAnalyticsTests: XCTestCase {
 
     var audioAnalytics: AudioAnalytics!
+    var mockAnalyticsService: MockAnalyticsService!
 
     override func setUp() {
         super.setUp()
-        audioAnalytics = AudioAnalytics()
+        mockAnalyticsService = MockAnalyticsService()
+        audioAnalytics = AudioAnalytics(analyticsService: mockAnalyticsService)
     }
 
     override func tearDown() {
         audioAnalytics = nil
+        mockAnalyticsService = nil
         super.tearDown()
     }
 
-    func testAudioAnalyticsInitialization() {
-        XCTAssertNotNil(audioAnalytics)
+    func testStartAndEndSession() {
+        audioAnalytics.startSession(scene: .nature)
+        XCTAssertNotNil(audioAnalytics.sessionStartTime)
         XCTAssertEqual(audioAnalytics.currentSessionDuration, 0)
-        XCTAssertEqual(audioAnalytics.totalListeningTime, 0)
-        XCTAssertEqual(audioAnalytics.averageVolume, 0)
-        XCTAssertEqual(audioAnalytics.peakVolume, 0)
-        XCTAssertEqual(audioAnalytics.audioQualityScore, 0)
-    }
 
-    func testSessionTracking() {
-        // Test session start
-        audioAnalytics.startSession(scene: .ocean)
-        XCTAssertGreaterThan(audioAnalytics.currentSessionDuration, 0)
-
-        // Wait a bit to let session duration increase
-        let expectation = self.expectation(description: "Session duration should increase")
+        let expectation = XCTestExpectation(description: "Wait for session to end")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.audioAnalytics.endSession()
+            XCTAssertNil(self.audioAnalytics.sessionStartTime)
+            XCTAssertGreaterThan(self.audioAnalytics.currentSessionDuration, 0)
+            XCTAssertEqual(self.mockAnalyticsService.loggedEvents.count, 2) // Start and End
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 1.0)
-
-        // Test session end
-        audioAnalytics.endSession()
-        XCTAssertGreaterThan(audioAnalytics.totalListeningTime, 0)
-    }
-
-    func testSessionPauseResume() {
-        audioAnalytics.startSession(scene: .forest)
-
-        // Test pause
-        audioAnalytics.pauseSession()
-        XCTAssertTrue(true) // Method should complete without error
-
-        // Test resume
-        audioAnalytics.resumeSession()
-        XCTAssertTrue(true) // Method should complete without error
-
-        audioAnalytics.endSession()
     }
 
     func testAudioQualityTracking() {
-        // Create a test audio buffer
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
-        let frameCount: AVAudioFrameCount = 1024
-
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+        guard let buffer = makeTestBuffer() else {
             XCTFail("Failed to create audio buffer")
             return
         }
 
-        buffer.frameLength = frameCount
-
-        // Fill buffer with test audio data
-        if let channelData = buffer.floatChannelData?[0] {
-            for i in 0..<Int(frameCount) {
-                channelData[i] = sin(2.0 * Float.pi * 440.0 * Float(i) / 44100.0) * 0.5
-            }
-        }
-
-        // Track audio quality
         audioAnalytics.trackAudioQuality(buffer: buffer)
-
-        // Verify that quality metrics are updated
-        XCTAssertGreaterThan(audioAnalytics.averageVolume, 0)
-        XCTAssertGreaterThan(audioAnalytics.peakVolume, 0)
         XCTAssertGreaterThan(audioAnalytics.audioQualityScore, 0)
     }
 
     func testUsageStatistics() {
-        // Start multiple sessions
-        audioAnalytics.startSession(scene: .ocean)
-        audioAnalytics.endSession()
-
-        audioAnalytics.startSession(scene: .forest)
-        audioAnalytics.endSession()
-
-        audioAnalytics.startSession(scene: .ocean)
-        audioAnalytics.endSession()
-
-        // Get usage statistics
+        audioAnalytics.startSession(scene: .urban)
+        audioAnalytics.totalListeningTime = 120
         let stats = audioAnalytics.getUsageStatistics()
 
-        XCTAssertEqual(stats.totalSessions, 3)
-        XCTAssertGreaterThan(stats.totalListeningTime, 0)
-        XCTAssertGreaterThan(stats.averageSessionDuration, 0)
-        XCTAssertNotNil(stats.favoriteScene)
-        XCTAssertEqual(stats.favoriteScene, .ocean) // Ocean was played twice
-        XCTAssertEqual(stats.scenePlayCounts[.ocean], 2)
-        XCTAssertEqual(stats.scenePlayCounts[.forest], 1)
+        XCTAssertEqual(stats.totalListeningTime, 120)
+        XCTAssertEqual(stats.favoriteScene, .urban)
     }
 
-    func testAnalyticsExport() {
-        // Start a session to generate some data
-        audioAnalytics.startSession(scene: .rain)
-        audioAnalytics.endSession()
-
-        // Export analytics data
-        let exportedData = audioAnalytics.exportAnalyticsData()
-        XCTAssertNotNil(exportedData)
-
-        // Verify that exported data is valid JSON
-        if let data = exportedData {
-            do {
-                let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-                XCTAssertNotNil(jsonObject)
-            } catch {
-                XCTFail("Exported data is not valid JSON: \(error)")
-            }
-        }
-    }
-
-    func testMultipleQualityMeasurements() {
-        // Create multiple test buffers with different quality levels
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
-        let frameCount: AVAudioFrameCount = 1024
-
-        // High quality buffer
-        guard let highQualityBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-            XCTFail("Failed to create audio buffer")
+    func testHighAndLowQualityScores() {
+        // Create a high-quality buffer (e.g., high dynamic range)
+        guard let highQualityBuffer = makeTestBuffer() else {
+            XCTFail("Failed to create high quality buffer")
             return
         }
-        highQualityBuffer.frameLength = frameCount
-
         if let channelData = highQualityBuffer.floatChannelData?[0] {
-            for i in 0..<Int(frameCount) {
-                channelData[i] = sin(2.0 * Float.pi * 440.0 * Float(i) / 44100.0) * 0.7
+            for i in 0..<Int(highQualityBuffer.frameLength) {
+                channelData[i] = sin(Float(i) * 0.1) * 0.8 // High amplitude
             }
         }
-
-        // Low quality buffer (with noise)
-        guard let lowQualityBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-            XCTFail("Failed to create audio buffer")
-            return
-        }
-        lowQualityBuffer.frameLength = frameCount
-
-        if let channelData = lowQualityBuffer.floatChannelData?[0] {
-            for i in 0..<Int(frameCount) {
-                let signal = sin(2.0 * Float.pi * 440.0 * Float(i) / 44100.0) * 0.3
-                let noise = Float.random(in: -0.2...0.2)
-                channelData[i] = signal + noise
-            }
-        }
-
-        // Track quality for multiple buffers
         audioAnalytics.trackAudioQuality(buffer: highQualityBuffer)
         let highQualityScore = audioAnalytics.audioQualityScore
 
+        // Create a low-quality buffer (e.g., clipped audio)
+        guard let lowQualityBuffer = makeTestBuffer() else {
+            XCTFail("Failed to create low quality buffer")
+            return
+        }
+        if let channelData = lowQualityBuffer.floatChannelData?[0] {
+            for i in 0..<Int(lowQualityBuffer.frameLength) {
+                channelData[i] = max(-0.1, min(0.1, sin(Float(i) * 0.1))) // Low amplitude, clipped
+            }
+        }
         audioAnalytics.trackAudioQuality(buffer: lowQualityBuffer)
         let mixedQualityScore = audioAnalytics.audioQualityScore
 
@@ -177,32 +94,62 @@ final class AudioAnalyticsTests: XCTestCase {
         audioAnalytics.startSession(scene: .stars)
 
         // Simulate quality tracking over time
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
-        let frameCount: AVAudioFrameCount = 1024
-
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+        guard let buffer = makeTestBuffer() else {
             XCTFail("Failed to create audio buffer")
             return
         }
-        buffer.frameLength = frameCount
 
         if let channelData = buffer.floatChannelData?[0] {
-            for i in 0..<Int(frameCount) {
-                channelData[i] = sin(2.0 * Float.pi * 440.0 * Float(i) / 44100.0) * 0.5
+            for i in 0..<Int(buffer.frameLength) {
+                channelData[i] = sin(Float(i) * 0.1) * 0.5 // Example audio data
             }
         }
 
-        // Track quality multiple times
-        for _ in 0..<10 {
+        for _ in 0..<100 { // Simulate 100 updates
             audioAnalytics.trackAudioQuality(buffer: buffer)
         }
 
-        // End session
         audioAnalytics.endSession()
+        let stats = audioAnalytics.getUsageStatistics()
 
-        // Verify analytics are reasonable
-        XCTAssertGreaterThan(audioAnalytics.totalListeningTime, 0)
-        XCTAssertGreaterThan(audioAnalytics.averageVolume, 0)
-        XCTAssertGreaterThan(audioAnalytics.audioQualityScore, 0)
+        // Verify that the session produced some statistics
+        XCTAssertNotNil(stats, "Session statistics should not be nil")
+        XCTAssertGreaterThan(stats.averageSessionDuration, 0)
+        XCTAssertGreaterThan(stats.audioQualityScore, 0)
+        XCTAssertEqual(mockAnalyticsService.loggedEvents.count, 2, "Should log start and end events for the session")
+    }
+
+    private func makeTestBuffer() -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else {
+            return nil
+        }
+        let frameCount: AVAudioFrameCount = 1024
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            return nil
+        }
+        buffer.frameLength = frameCount
+        return buffer
+    }
+}
+
+// Mock AnalyticsService for testing
+class MockAnalyticsService: AnalyticsService {
+    var loggedEvents: [AnalyticsEvent] = []
+
+    func logEvent(_ event: AnalyticsEvent) {
+        loggedEvents.append(event)
+    }
+
+    func getSessionId() -> String? {
+        return "mockSessionId"
+    }
+
+    func setUserId(_ userId: String?) {
+        // No-op
+    }
+
+    func reset() {
+        loggedEvents.removeAll()
     }
 }

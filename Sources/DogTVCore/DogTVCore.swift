@@ -1,4 +1,5 @@
 import Foundation
+
 import Combine
 
 /// DogTVCore - Core business logic and services for DogTV+
@@ -6,22 +7,25 @@ import Combine
 @available(iOS 17.0, tvOS 17.0, macOS 10.15, *)
 @MainActor
 public final class DogTVCore: ObservableObject {
-// MARK: - Shared Instance
+    // MARK: - Shared Instance
 
     public static let shared = DogTVCore()
 
-// MARK: - Services
+    // MARK: - Services
 
-    public let contentService = ContentService()
-    public let audioService = AudioService()
-    public let settingsService = SettingsService()
-    public let analyticsService = AnalyticsService()
+    public let contentService: ContentService
+    public let audioService: AudioService
+    public let settingsService: SettingsService
+    public let analyticsService: AnalyticsService
 
     private init() {
-        // Private initializer for singleton
+        self.contentService = ContentService()
+        self.audioService = AudioService()
+        self.settingsService = SettingsService()
+        self.analyticsService = CoreAnalyticsService.shared
     }
 
-// MARK: - Public Methods
+    // MARK: - Public Methods
 
     /// Initialize the core system
     public func initialize() async {

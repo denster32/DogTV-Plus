@@ -1,5 +1,8 @@
+import Foundation
 import XCTest
+
 import Combine
+
 @testable import DogTVCore
 @testable import DogTVData
 
@@ -90,7 +93,10 @@ final class ServiceTests: XCTestCase {
     // MARK: - SettingsService Tests
 
     func testSettingsServiceSaveAndLoad() {
-        let mockUserDefaults = UserDefaults(suiteName: #file)!
+        guard let mockUserDefaults = UserDefaults(suiteName: #file) else {
+            XCTFail("Failed to create mock UserDefaults")
+            return
+        }
         mockUserDefaults.removePersistentDomain(forName: #file)
 
         let settingsService = SettingsService(userDefaults: mockUserDefaults)

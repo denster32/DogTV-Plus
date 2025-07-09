@@ -3,15 +3,41 @@ import Foundation
 // MARK: - AnalyticsEvent
 
 /// Represents a single analytics event to be tracked.
-public struct AnalyticsEvent: Codable, Sendable, Hashable {
-    public let name: String
-    public let parameters: [String: String]
-    public let timestamp: Date
+public enum AnalyticsEvent: Equatable {
+    case sessionStart(attributes: [String: AnyEquatable])
+    case sessionEnd(attributes: [String: AnyEquatable])
+    case event(name: String, attributes: [String: AnyEquatable]?)
 
-    public init(name: String, parameters: [String: String] = [:], timestamp: Date = Date()) {
-        self.name = name
-        self.parameters = parameters
-        self.timestamp = timestamp
+    public static func == (lhs: AnalyticsEvent, rhs: AnalyticsEvent) -> Bool {
+        switch (lhs, rhs) {
+        case let (.sessionStart(a1), .sessionStart(a2)):
+            return a1 == a2
+        case let (.sessionEnd(a1), .sessionEnd(a2)):
+            return a1 == a2
+        case let (.event(n1, a1), .event(n2, a2)):
+            return n1 == n2 && a1 == a2
+        default:
+            return false
+        }
+    }
+}
+
+public struct AnyEquatable: Equatable {
+    private let value: Any
+    private let equals: (Any) -> Bool
+
+    public init<T: Equatable>(_ value: T) {
+        self.value = value
+        self.equals = { other in
+            if let otherValue = other as? T {
+                return value == otherValue
+            }
+            return false
+        }
+    }
+
+    public static func == (lhs: AnyEquatable, rhs: AnyEquatable) -> Bool {
+        lhs.equals(rhs.value)
     }
 }
 
