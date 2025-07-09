@@ -12,4 +12,4 @@ class MemoryLeakTests: XCTestCase {
             XCTAssertNotNil(contents)
         }
     }
-} 
+}

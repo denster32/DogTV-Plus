@@ -3,7 +3,7 @@ import Metal
 import CoreImage
 import Vision
 
-@testable import DogTV_
+@testable import DogTVVision
 
 /**
  * VisionComparisonSystemTests: Comprehensive testing for vision comparison rendering
@@ -14,22 +14,22 @@ import Vision
  * - Performance and rendering quality
  */
 class VisionComparisonSystemTests: XCTestCase {
-    
+
     // MARK: - Test Constants
-    
+
     /// Minimum acceptable rendering quality
     private let MIN_RENDERING_QUALITY: Float = 0.7
-    
+
     /// Maximum acceptable rendering time
     private let MAX_RENDERING_TIME: TimeInterval = 0.05 // 50ms
-    
+
     // MARK: - Test Properties
-    
+
     /// Vision comparison system for testing
     private var visionComparisonSystem: VisionComparisonSystem!
-    
+
     // MARK: - Setup and Teardown
-    
+
     override func setUp() {
         super.setUp()
         do {
@@ -38,14 +38,14 @@ class VisionComparisonSystemTests: XCTestCase {
             XCTFail("Failed to initialize VisionComparisonSystem: \(error)")
         }
     }
-    
+
     override func tearDown() {
         visionComparisonSystem = nil
         super.tearDown()
     }
-    
+
     // MARK: - Rendering Mode Tests
-    
+
     /// Test side-by-side vision rendering
     func testSideBySideRendering() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -53,12 +53,12 @@ class VisionComparisonSystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let renderingConfigs = [
             VisionComparisonSystem.VisionRenderingConfig(mode: .sideBySide, colorProfile: .dichromatic),
             VisionComparisonSystem.VisionRenderingConfig(mode: .sideBySide, colorProfile: .trichromatic)
         ]
-        
+
         for config in renderingConfigs {
             do {
                 let start = Date()
@@ -67,7 +67,7 @@ class VisionComparisonSystemTests: XCTestCase {
                     config: config
                 )
                 let renderTime = Date().timeIntervalSince(start)
-                
+
                 XCTAssertNotNil(result, "Vision comparison rendering failed for \(config.mode)")
                 XCTAssertLessThan(renderTime, MAX_RENDERING_TIME, "Rendering time too long for \(config.mode)")
             } catch {
@@ -75,7 +75,7 @@ class VisionComparisonSystemTests: XCTestCase {
             }
         }
     }
-    
+
     /// Test dog vision color conversion
     func testDogVisionColorConversion() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -83,32 +83,32 @@ class VisionComparisonSystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let colorProfiles = [
             VisionComparisonSystem.ColorPerceptionProfile.dichromatic,
             VisionComparisonSystem.ColorPerceptionProfile.monochromatic
         ]
-        
+
         for profile in colorProfiles {
             let config = VisionComparisonSystem.VisionRenderingConfig(
                 mode: .dogVision,
                 colorProfile: profile,
                 renderingQuality: .high
             )
-            
+
             do {
                 let result = try visionComparisonSystem.renderVisionComparison(
                     humanTexture: texture,
                     config: config
                 )
-                
+
                 XCTAssertNotNil(result, "Dog vision color conversion failed for \(profile)")
             } catch {
                 XCTFail("Dog vision color conversion threw an error: \(error)")
             }
         }
     }
-    
+
     /// Test rendering quality variations
     func testRenderingQualityVariations() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -116,18 +116,18 @@ class VisionComparisonSystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let qualityLevels: [VisionComparisonSystem.RenderingQuality] = [
             .low, .medium, .high, .ultra
         ]
-        
+
         for quality in qualityLevels {
             let config = VisionComparisonSystem.VisionRenderingConfig(
                 mode: .sideBySide,
                 colorProfile: .dichromatic,
                 renderingQuality: quality
             )
-            
+
             do {
                 let start = Date()
                 let result = try visionComparisonSystem.renderVisionComparison(
@@ -135,7 +135,7 @@ class VisionComparisonSystemTests: XCTestCase {
                     config: config
                 )
                 let renderTime = Date().timeIntervalSince(start)
-                
+
                 XCTAssertNotNil(result, "Rendering failed for quality level \(quality)")
                 XCTAssertLessThan(renderTime, MAX_RENDERING_TIME * Double(quality.rawValue + 1), "Rendering time too long for \(quality)")
             } catch {
@@ -143,9 +143,9 @@ class VisionComparisonSystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Performance Tests
-    
+
     /// Comprehensive performance test for vision comparison rendering
     func testVisionComparisonPerformance() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -153,14 +153,14 @@ class VisionComparisonSystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let iterations = 100
         let config = VisionComparisonSystem.VisionRenderingConfig(
             mode: .sideBySide,
             colorProfile: .dichromatic,
             renderingQuality: .high
         )
-        
+
         measure {
             for _ in 0..<iterations {
                 do {
@@ -174,44 +174,44 @@ class VisionComparisonSystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Live Content Conversion Tests
-    
+
     /// Test live content color space conversion
     func testLiveContentColorSpaceConversion() {
         guard let device = MTLCreateSystemDefaultDevice() else {
             XCTFail("Failed to create Metal device")
             return
         }
-        
+
         // Create multiple test textures to simulate video frames
         let testFrames = (0..<5).compactMap { _ in
             createTestTexture(device: device)
         }
-        
+
         let colorProfiles: [VisionComparisonSystem.ColorPerceptionProfile] = [
             .dichromatic,
             .monochromatic,
             .trichromatic
         ]
-        
+
         for profile in colorProfiles {
             let config = VisionComparisonSystem.VisionRenderingConfig(
                 mode: .dogVision,
                 colorProfile: profile,
                 renderingQuality: .high
             )
-            
+
             let convertedFrames = visionComparisonSystem.simulateLiveVideoConversion(
                 videoFrames: testFrames,
                 config: config
             )
-            
+
             XCTAssertEqual(convertedFrames.count, testFrames.count, "Frame count should remain consistent")
-            
+
             for (index, frame) in convertedFrames.enumerated() {
                 XCTAssertNotNil(frame, "Frame \(index) conversion failed for \(profile)")
-                
+
                 // Optional: Add more specific checks for converted frames
                 if let convertedFrame = frame {
                     XCTAssertEqual(convertedFrame.width, testFrames[index].width, "Converted frame width should match original")
@@ -220,25 +220,25 @@ class VisionComparisonSystemTests: XCTestCase {
             }
         }
     }
-    
+
     /// Test live content conversion performance
     func testLiveContentConversionPerformance() {
         guard let device = MTLCreateSystemDefaultDevice() else {
             XCTFail("Failed to create Metal device")
             return
         }
-        
+
         // Create multiple test textures to simulate video frames
         let testFrames = (0..<30).compactMap { _ in
             createTestTexture(device: device)
         }
-        
+
         let config = VisionComparisonSystem.VisionRenderingConfig(
             mode: .dogVision,
             colorProfile: .dichromatic,
             renderingQuality: .high
         )
-        
+
         measure {
             _ = visionComparisonSystem.simulateLiveVideoConversion(
                 videoFrames: testFrames,
@@ -246,7 +246,7 @@ class VisionComparisonSystemTests: XCTestCase {
             )
         }
     }
-    
+
     /// Test color space conversion edge cases
     func testColorSpaceConversionEdgeCases() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -254,7 +254,7 @@ class VisionComparisonSystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let edgeCaseConfigs = [
             VisionComparisonSystem.VisionRenderingConfig(
                 mode: .dogVision,
@@ -267,23 +267,23 @@ class VisionComparisonSystemTests: XCTestCase {
                 renderingQuality: .ultra
             )
         ]
-        
+
         for config in edgeCaseConfigs {
             do {
                 let result = try visionComparisonSystem.convertLiveContentToDogVision(
                     texture,
                     config: config
                 )
-                
+
                 XCTAssertNotNil(result, "Edge case conversion failed for \(config.colorProfile)")
             } catch {
                 XCTFail("Edge case conversion threw an error: \(error)")
             }
         }
     }
-    
+
     // MARK: - Utility Methods
-    
+
     /// Create a test texture for rendering
     private func createTestTexture(device: MTLDevice) -> MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
@@ -300,7 +300,7 @@ class VisionComparisonSystemTests: XCTestCase {
 // MARK: - Extension for RenderingQuality Raw Value
 extension VisionComparisonSystem.RenderingQuality: RawRepresentable {
     public typealias RawValue = Int
-    
+
     public init?(rawValue: RawValue) {
         switch rawValue {
         case 0: self = .low
@@ -310,7 +310,7 @@ extension VisionComparisonSystem.RenderingQuality: RawRepresentable {
         default: return nil
         }
     }
-    
+
     public var rawValue: RawValue {
         switch self {
         case .low: return 0
@@ -319,4 +319,4 @@ extension VisionComparisonSystem.RenderingQuality: RawRepresentable {
         case .ultra: return 3
         }
     }
-} 
+}

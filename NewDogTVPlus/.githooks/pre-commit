@@ -1,0 +1,39 @@
+#!/bin/sh
+# Pre-commit hook for DogTV+ project
+# This hook runs code quality checks before allowing commits
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if SwiftLint is available
+if ! command -v swiftlint >/dev/null 2>&1; then
+    echo "⚠️  SwiftLint not found. Installing via Swift Package Manager..."
+    # Use SwiftLint from package dependencies
+    swift package plugin --allow-writing-to-package-directory swiftlint
+fi
+
+# Run SwiftLint
+echo "📝 Running SwiftLint..."
+if ! swiftlint --strict; then
+    echo "❌ SwiftLint found violations. Please fix them before committing."
+    echo "   You can run 'swiftlint --fix' to automatically fix some issues."
+    exit 1
+fi
+
+# Run Swift build to check for compilation errors
+echo "🔨 Checking build..."
+if ! swift build; then
+    echo "❌ Build failed. Please fix compilation errors before committing."
+    exit 1
+fi
+
+# Run tests to ensure no functionality is broken
+echo "🧪 Running tests..."
+if ! swift test; then
+    echo "❌ Tests failed. Please fix failing tests before committing."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0

@@ -1,0 +1,354 @@
+name: DogTV+ CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_15.2.app/Contents/Developer
+  SWIFT_VERSION: 5.9
+  MINIMUM_DEPLOYMENT_TARGET: 17.0
+
+jobs:
+  # MARK: - Code Quality & Security
+  code_quality:
+    name: Code Quality & Security Checks
+    runs-on: macos-14
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+    
+    - name: Swift Lint
+      run: |
+        if which swiftlint >/dev/null; then
+          swiftlint --strict --reporter github-actions-logging
+        else
+          echo "SwiftLint not installed, skipping..."
+        fi
+    
+    - name: Swift Format Check
+      run: |
+        swift package plugin --allow-writing-to-directory . swiftformat --lint .
+    
+    - name: Security Scan
+      run: |
+        chmod +x Scripts/security_scanner.swift
+        swift Scripts/security_scanner.swift
+    
+    - name: Package Resolution
+      run: swift package resolve
+    
+    - name: Package Validation
+      run: swift package validate
+    
+    - name: Build Configuration Generation
+      run: |
+        chmod +x Scripts/build_configurations.swift
+        swift Scripts/build_configurations.swift
+
+  # MARK: - Unit Tests
+  unit_tests:
+    name: Unit Tests
+    runs-on: macos-14
+    timeout-minutes: 45
+    needs: code_quality
+    
+    strategy:
+      matrix:
+        configuration: [debug, release]
+        platform: [tvOS, iOS, macOS]
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ matrix.platform }}-${{ matrix.configuration }}-${{ hashFiles('Package.swift', 'Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-${{ matrix.platform }}-
+          ${{ runner.os }}-spm-
+    
+    - name: Build Tests
+      run: |
+        swift build --configuration ${{ matrix.configuration }}
+    
+    - name: Run Unit Tests
+      run: |
+        swift test --configuration ${{ matrix.configuration }} --enable-code-coverage
+    
+    - name: Generate Code Coverage Report
+      run: |
+        xcrun llvm-cov export -format="lcov" \
+          .build/${{ matrix.configuration }}/DogTVPlusPackageTests.xctest \
+          -instr-profile .build/${{ matrix.configuration }}/codecov/default.profdata \
+          > coverage.lcov
+    
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.lcov
+        flags: unittests,${{ matrix.platform }},${{ matrix.configuration }}
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
+  # MARK: - Performance Tests
+  performance_tests:
+    name: Performance Tests
+    runs-on: macos-14
+    timeout-minutes: 60
+    needs: unit_tests
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-performance-${{ hashFiles('Package.swift', 'Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+    
+    - name: Build Performance Tests
+      run: |
+        swift build --configuration release
+    
+    - name: Run Performance Tests
+      run: |
+        swift test --filter DogTVPerformanceTests --configuration release
+    
+    - name: Performance Profiling
+      run: |
+        chmod +x Scripts/performance_profiler.swift
+        swift Scripts/performance_profiler.swift --all
+    
+    - name: Upload Performance Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports
+        path: build_performance_*.txt
+        retention-days: 30
+
+  # MARK: - Integration Tests
+  integration_tests:
+    name: Integration Tests
+    runs-on: macos-14
+    timeout-minutes: 60
+    needs: unit_tests
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+    
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-integration-${{ hashFiles('Package.swift', 'Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+    
+    - name: Build Integration Tests
+      run: |
+        swift build --configuration release
+    
+    - name: Run Integration Tests
+      run: |
+        swift test --filter DogTVIntegrationTests --configuration release
+    
+    - name: Archive Integration Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          .build/release/
+          test-results.xml
+        retention-days: 30
+
+  # MARK: - Build & Archive
+  build_and_archive:
+    name: Build & Archive for App Store
+    runs-on: macos-14
+    timeout-minutes: 90
+    needs: [performance_tests, integration_tests]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+    
+    - name: Install Apple Certificate
+      env:
+        BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+        P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      run: |
+        # Create variables
+        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+        
+        # Import certificate from secrets
+        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+        
+        # Create temporary keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        
+        # Import certificate to keychain
+        security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+        security list-keychain -d user -s $KEYCHAIN_PATH
+    
+    - name: Install Provisioning Profile
+      env:
+        PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+      run: |
+        # Create variables
+        PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+        
+        # Import provisioning profile from secrets
+        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output $PP_PATH
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+    
+    - name: Build Archive
+      run: |
+        xcodebuild -workspace DogTV+.xcworkspace \
+          -scheme DogTV+ \
+          -configuration Release \
+          -destination generic/platform=tvOS \
+          -archivePath $RUNNER_TEMP/DogTV+.xcarchive \
+          archive
+    
+    - name: Export for App Store
+      run: |
+        xcodebuild -exportArchive \
+          -archivePath $RUNNER_TEMP/DogTV+.xcarchive \
+          -exportOptionsPlist exportOptions.plist \
+          -exportPath $RUNNER_TEMP/build
+    
+    - name: Upload to App Store Connect
+      env:
+        APPSTORE_CONNECT_USERNAME: ${{ secrets.APPSTORE_CONNECT_USERNAME }}
+        APPSTORE_CONNECT_PASSWORD: ${{ secrets.APPSTORE_CONNECT_PASSWORD }}
+      run: |
+        xcrun altool --upload-app -f $RUNNER_TEMP/build/DogTV+.ipa \
+          -u "$APPSTORE_CONNECT_USERNAME" \
+          -p "$APPSTORE_CONNECT_PASSWORD"
+    
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-store-build
+        path: $RUNNER_TEMP/build/
+        retention-days: 90
+
+  # MARK: - Documentation
+  documentation:
+    name: Generate Documentation
+    runs-on: macos-14
+    timeout-minutes: 30
+    needs: code_quality
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+    
+    - name: Generate Documentation
+      run: |
+        swift package generate-documentation \
+          --target DogTVCore \
+          --target DogTVUI \
+          --target DogTVAudio \
+          --target DogTVVision \
+          --target DogTVData \
+          --output-path ./docs
+    
+    - name: Deploy Documentation
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        destination_dir: docs
+
+  # MARK: - Notification
+  notify:
+    name: Notification
+    runs-on: macos-14
+    timeout-minutes: 5
+    needs: [build_and_archive, documentation]
+    if: always()
+    
+    steps:
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        channel: '#dogtv-builds'
+        text: |
+          DogTV+ CI/CD Pipeline Results:
+          - Code Quality: ${{ needs.code_quality.result }}
+          - Unit Tests: ${{ needs.unit_tests.result }}
+          - Performance Tests: ${{ needs.performance_tests.result }}
+          - Integration Tests: ${{ needs.integration_tests.result }}
+          - Build & Archive: ${{ needs.build_and_archive.result }}
+          - Documentation: ${{ needs.documentation.result }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

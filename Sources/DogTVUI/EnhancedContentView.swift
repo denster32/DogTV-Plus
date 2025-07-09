@@ -1,359 +1,203 @@
+// swiftlint:disable import_organization availability_attributes
 import SwiftUI
 import DogTVCore
-import DogTVVision
+
+typealias AppScene = DogTVCore.Scene
+// swiftlint:enable import_organization
 
 /// Enhanced ContentView with procedural content generation and canine optimization
+@available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
 public struct EnhancedContentView: View {
-    @Binding var currentView: DogTVMainApp.AppView
-    @StateObject private var animationSystem = EnhancedAnimationSystem()
-    @StateObject private var designSystem = DogTVDesignSystem()
-    
-    @State private var selectedTab = 0
-    @State private var showWelcome = true
-    
-    public init(currentView: Binding<DogTVMainApp.AppView>) {
-        self._currentView = currentView
-    }
-    
+    @EnvironmentObject var dogTVCore: DogTVCore
+    @State private var selectedScene: AppScene?
+
+    public init() {}
+
     public var body: some View {
-        ZStack {
-            if showWelcome {
-                welcomeView
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            } else {
-                mainInterface
-                    .transition(.opacity.combined(with: .scale(scale: 1.1)))
-            }
-        }
-        .onAppear {
-            startWelcomeAnimation()
-        }
-    }
-    
-    // MARK: - Welcome View
-    
-    private var welcomeView: some View {
-        VStack(spacing: 60) {
-            // Logo with animation
-            VStack(spacing: 24) {
-                Image(systemName: "pawprint.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(designSystem.colors.primary)
-                    .scaleEffect(animationSystem.isAnimating ? 1.1 : 1.0)
-                    .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: animationSystem.isAnimating)
-                
-                Text("DogTV+")
-                    .font(designSystem.typography.largeTitle)
-                    .foregroundColor(designSystem.colors.primary)
-                
-                Text("Real-time Procedural Entertainment for Dogs")
-                    .font(designSystem.typography.subheadline)
-                    .foregroundColor(designSystem.colors.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            // Features
-            VStack(spacing: 20) {
-                FeatureItem(icon: "eye.fill", title: "Canine Vision Optimized", description: "Colors and contrast tailored for dichromatic vision")
-                FeatureItem(icon: "waveform.path", title: "Real-time Generation", description: "No videos - everything generated live using Metal")
-                FeatureItem(icon: "brain.head.profile", title: "Scientifically Based", description: "Based on canine behavior research")
-            }
-            .padding(.horizontal, 40)
-            
-            // Start Experience Button
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.8)) {
-                    showWelcome = false
+        NavigationView {
+            VStack {
+                HeaderView()
+
+                if dogTVCore.isPlaying {
+                    PlayingView()
+                } else {
+                    SceneSelectionView()
                 }
-            }) {
-                Text("Start Experience")
-                    .font(designSystem.typography.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 40)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(designSystem.colors.primary)
-                            .shadow(color: designSystem.colors.primary.opacity(0.3), radius: 10, x: 0, y: 5)
-                    )
+
+                Spacer()
             }
+            .navigationTitle("DogTV+ Enhanced")
         }
-        .padding(40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(designSystem.backgroundGradient)
-    }
-    
-    // MARK: - Main Interface
-    
-    private var mainInterface: some View {
-        VStack(spacing: 0) {
-            // Header
-            headerView
-            
-            // Tab content
-            TabView(selection: $selectedTab) {
-                // Main procedural content view
-                ProceduralContentView()
-                    .tag(0)
-                
-                // Scene library
-                sceneLibraryView
-                    .tag(1)
-                
-                // Settings
-                settingsView
-                    .tag(2)
-            }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            
-            // Bottom navigation
-            bottomNavigationView
-        }
-    }
-    
-    // MARK: - Header View
-    
-    private var headerView: some View {
-        HStack {
-            // App title
-            HStack(spacing: 12) {
-                Image(systemName: "pawprint.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(designSystem.colors.primary)
-                
-                Text("DogTV+")
-                    .font(designSystem.typography.title2)
-                    .foregroundColor(designSystem.colors.primary)
-            }
-            
-            Spacer()
-            
-            // Back button
-            Button("Back") {
-                currentView = .welcome
-            }
-            .foregroundColor(designSystem.colors.secondary)
-        }
-        .padding(.horizontal, 30)
-        .padding(.vertical, 16)
-        .background(Color.white.opacity(0.9))
-    }
-    
-    // MARK: - Scene Library View
-    
-    private var sceneLibraryView: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Text("Procedural Scenes")
-                    .font(designSystem.typography.largeTitle)
-                    .foregroundColor(designSystem.colors.primary)
-                    .padding(.top, 20)
-                
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 20) {
-                    ForEach(ProceduralContentGenerator.CanineScene.allCases, id: \.self) { scene in
-                        SceneCard(scene: scene)
-                    }
-                }
-                .padding(.horizontal, 30)
-            }
-        }
-        .background(designSystem.backgroundGradient)
-    }
-    
-    // MARK: - Settings View
-    
-    private var settingsView: some View {
-        ScrollView {
-            VStack(spacing: 30) {
-                Text("Settings")
-                    .font(designSystem.typography.largeTitle)
-                    .foregroundColor(designSystem.colors.primary)
-                    .padding(.top, 20)
-                
-                VStack(spacing: 20) {
-                    SettingItem(icon: "timer", title: "Auto-transition", subtitle: "Automatically change scenes every 5 minutes")
-                    SettingItem(icon: "dial.high", title: "Intensity Level", subtitle: "Adjust visual intensity for your dog")
-                    SettingItem(icon: "speaker.wave.2", title: "Audio Settings", subtitle: "Configure therapeutic frequencies")
-                    SettingItem(icon: "eye", title: "Vision Mode", subtitle: "Optimize for canine dichromatic vision")
-                }
-                .padding(.horizontal, 30)
-            }
-        }
-        .background(designSystem.backgroundGradient)
-    }
-    
-    // MARK: - Bottom Navigation
-    
-    private var bottomNavigationView: some View {
-        HStack {
-            NavigationButton(
-                icon: "play.circle.fill",
-                title: "Experience",
-                isSelected: selectedTab == 0
-            ) {
-                selectedTab = 0
-            }
-            
-            Spacer()
-            
-            NavigationButton(
-                icon: "square.grid.2x2",
-                title: "Scenes",
-                isSelected: selectedTab == 1
-            ) {
-                selectedTab = 1
-            }
-            
-            Spacer()
-            
-            NavigationButton(
-                icon: "gearshape.fill",
-                title: "Settings",
-                isSelected: selectedTab == 2
-            ) {
-                selectedTab = 2
-            }
-        }
-        .padding(.horizontal, 40)
-        .padding(.vertical, 20)
-        .background(Color.white.opacity(0.9))
-    }
-    
-    // MARK: - Private Methods
-    
-    private func startWelcomeAnimation() {
-        animationSystem.startAnimation()
     }
 }
 
-// MARK: - Supporting Views
-
-private struct FeatureItem: View {
-    let icon: String
-    let title: String
-    let description: String
-    @EnvironmentObject var designSystem: DogTVDesignSystem
-    
+@available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
+private struct HeaderView: View {
     var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(designSystem.colors.accent)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(designSystem.typography.headline)
-                    .foregroundColor(designSystem.colors.primary)
-                
-                Text(description)
-                    .font(designSystem.typography.caption)
-                    .foregroundColor(designSystem.colors.secondary)
-            }
-            
-            Spacer()
+        VStack {
+            Text("DogTV+ Enhanced")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .padding()
+
+            Text("Canine Entertainment with Advanced Features")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 20)
         }
     }
 }
 
-private struct SceneCard: View {
-    let scene: ProceduralContentGenerator.CanineScene
-    @EnvironmentObject var designSystem: DogTVDesignSystem
-    
+@available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
+private struct PlayingView: View {
+    @EnvironmentObject var dogTVCore: DogTVCore
+
+    var body: some View {
+        VStack {
+            Text("Now Playing")
+                .font(.title)
+                .fontWeight(.semibold)
+                .padding()
+
+            Text(dogTVCore.currentScene?.name ?? "Unknown Scene")
+                .font(.title2)
+                .foregroundColor(.blue)
+                .padding()
+
+            Text(dogTVCore.currentScene?.description ?? "")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding()
+
+            Button("Stop Scene") {
+                Task {
+                    try? await dogTVCore.stopScene()
+                }
+            }
+            .padding()
+            .background(Color.red)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+    }
+}
+
+@available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
+private struct SceneSelectionView: View {
+    @EnvironmentObject var dogTVCore: DogTVCore
+
+    var body: some View {
+        VStack {
+            Text("Choose a Scene")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .padding()
+
+            LazyVGrid(columns: [
+                GridItem(.adaptive(minimum: 200))
+            ], spacing: 15) {
+                ForEach(dogTVCore.contentService.availableScenes) { scene in
+                    EnhancedSceneCard(scene: scene)
+                }
+            }
+            .padding()
+        }
+    }
+}
+
+@available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
+private struct EnhancedSceneCard: View {
+    let scene: AppScene
+    @EnvironmentObject var dogTVCore: DogTVCore
+    @State private var isHovered = false
+
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: scene.icon)
+            // Scene Icon
+            Image(systemName: sceneIcon(for: scene.type))
                 .font(.system(size: 40))
-                .foregroundColor(designSystem.colors.primary)
-            
-            Text(scene.rawValue)
-                .font(designSystem.typography.headline)
-                .foregroundColor(designSystem.colors.primary)
-                .multilineTextAlignment(.center)
-            
-            Text(scene.description)
-                .font(designSystem.typography.caption)
-                .foregroundColor(designSystem.colors.secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-        )
-    }
-}
+                .foregroundColor(sceneColor(for: scene.type))
+                .padding()
 
-private struct SettingItem: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    @EnvironmentObject var designSystem: DogTVDesignSystem
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(designSystem.colors.primary)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(designSystem.typography.headline)
-                    .foregroundColor(designSystem.colors.primary)
-                
-                Text(subtitle)
-                    .font(designSystem.typography.caption)
-                    .foregroundColor(designSystem.colors.secondary)
+            // Scene Details
+            VStack(spacing: 8) {
+                Text(scene.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
+
+                Text(scene.description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+
+                // Duration
+                Text("Duration: \(Int(scene.duration / 60)) min")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(designSystem.colors.secondary)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-        )
-    }
-}
+            .padding(.horizontal, 8)
 
-private struct NavigationButton: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    @EnvironmentObject var designSystem: DogTVDesignSystem
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(isSelected ? designSystem.colors.primary : designSystem.colors.secondary)
-                
-                Text(title)
-                    .font(designSystem.typography.caption)
-                    .foregroundColor(isSelected ? designSystem.colors.primary : designSystem.colors.secondary)
+            // Play Button
+            Button(action: {
+                Task {
+                    try? await dogTVCore.startScene(scene)
+                }
+            }) {
+                HStack {
+                    Image(systemName: "play.fill")
+                    Text("Play")
+                }
+                .font(.body)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 20)
+                .background(Color.green)
+                .cornerRadius(8)
             }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(16)
+        .scaleEffect(isHovered ? 1.05 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+    }
+
+    private func sceneIcon(for type: SceneType) -> String {
+        switch type {
+        case .ocean: return "water.waves"
+        case .forest: return "tree.fill"
+        case .fireflies: return "sparkles"
+        case .rain: return "cloud.drizzle.fill"
+        case .sunset: return "sun.max.fill"
+        case .stars: return "star.fill"
+        }
+    }
+
+    private func sceneColor(for type: SceneType) -> Color {
+        switch type {
+        case .ocean: return .blue
+        case .forest: return .green
+        case .fireflies: return .yellow
+        case .rain: return .gray
+        case .sunset: return .orange
+        case .stars: return .purple
         }
     }
 }
 
-#if DEBUG
-struct EnhancedContentView_Previews: PreviewProvider {
+@available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
+private struct EnhancedSceneCard_Previews: PreviewProvider {
     static var previews: some View {
-        EnhancedContentView(currentView: .constant(.main))
-            .environmentObject(DogTVDesignSystem())
-            .previewDevice("Apple TV 4K")
+        EnhancedSceneCard(scene: Scene.example)
+            .environmentObject(DogTVCore())
     }
 }
-#endif
+// swiftlint:enable availability_attributes

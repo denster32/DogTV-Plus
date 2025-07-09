@@ -3,7 +3,7 @@ import Metal
 import CoreImage
 import Vision
 
-@testable import DogTV_
+@testable import DogTVVision
 
 /**
  * VisionEducationOverlaySystemTests: Comprehensive testing for educational overlay rendering
@@ -14,22 +14,22 @@ import Vision
  * - Performance and rendering quality
  */
 class VisionEducationOverlaySystemTests: XCTestCase {
-    
+
     // MARK: - Test Constants
-    
+
     /// Minimum acceptable rendering quality
     private let MIN_RENDERING_QUALITY: Float = 0.7
-    
+
     /// Maximum acceptable rendering time
     private let MAX_RENDERING_TIME: TimeInterval = 0.05 // 50ms
-    
+
     // MARK: - Test Properties
-    
+
     /// Vision education overlay system for testing
     private var visionEducationOverlaySystem: VisionEducationOverlaySystem!
-    
+
     // MARK: - Setup and Teardown
-    
+
     override func setUp() {
         super.setUp()
         do {
@@ -38,14 +38,14 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             XCTFail("Failed to initialize VisionEducationOverlaySystem: \(error)")
         }
     }
-    
+
     override func tearDown() {
         visionEducationOverlaySystem = nil
         super.tearDown()
     }
-    
+
     // MARK: - Overlay Generation Tests
-    
+
     /// Test educational overlay generation for different content types
     func testEducationalOverlayGeneration() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -53,14 +53,14 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let contentTypes: [VisionEducationOverlaySystem.EducationalContentType] = [
             .colorPerception,
             .motionSensitivity,
             .visualAcuity,
             .depthPerception
         ]
-        
+
         for contentType in contentTypes {
             let configs = [
                 VisionEducationOverlaySystem.EducationalOverlayConfig(
@@ -75,7 +75,7 @@ class VisionEducationOverlaySystemTests: XCTestCase {
                     language: "es"
                 )
             ]
-            
+
             for config in configs {
                 do {
                     let start = Date()
@@ -84,7 +84,7 @@ class VisionEducationOverlaySystemTests: XCTestCase {
                         config: config
                     )
                     let renderTime = Date().timeIntervalSince(start)
-                    
+
                     XCTAssertNotNil(result, "Educational overlay generation failed for \(contentType)")
                     XCTAssertLessThan(renderTime, MAX_RENDERING_TIME, "Rendering time too long for \(contentType)")
                 } catch {
@@ -93,7 +93,7 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             }
         }
     }
-    
+
     /// Test localization support
     func testLocalizationSupport() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -101,9 +101,9 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let languages = ["en", "es"]
-        
+
         for language in languages {
             let configs = [
                 VisionEducationOverlaySystem.EducationalOverlayConfig(
@@ -118,14 +118,14 @@ class VisionEducationOverlaySystemTests: XCTestCase {
                     language: language
                 )
             ]
-            
+
             for config in configs {
                 do {
                     let result = try visionEducationOverlaySystem.generateEducationalOverlay(
                         backgroundTexture: backgroundTexture,
                         config: config
                     )
-                    
+
                     XCTAssertNotNil(result, "Localized overlay generation failed for \(language)")
                 } catch {
                     XCTFail("Localized overlay generation threw an error: \(error)")
@@ -133,7 +133,7 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             }
         }
     }
-    
+
     /// Test complexity levels
     func testComplexityLevels() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -141,18 +141,18 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let complexityLevels: [VisionEducationOverlaySystem.EducationComplexity] = [
             .basic, .intermediate, .advanced, .scientific
         ]
-        
+
         for complexity in complexityLevels {
             let config = VisionEducationOverlaySystem.EducationalOverlayConfig(
                 contentType: .visualAcuity,
                 complexity: complexity,
                 breed: "borderCollie"
             )
-            
+
             do {
                 let start = Date()
                 let result = try visionEducationOverlaySystem.generateEducationalOverlay(
@@ -160,7 +160,7 @@ class VisionEducationOverlaySystemTests: XCTestCase {
                     config: config
                 )
                 let renderTime = Date().timeIntervalSince(start)
-                
+
                 XCTAssertNotNil(result, "Educational overlay generation failed for \(complexity)")
                 XCTAssertLessThan(renderTime, MAX_RENDERING_TIME * Double(complexity.rawValue + 1), "Rendering time too long for \(complexity)")
             } catch {
@@ -168,9 +168,9 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Performance Tests
-    
+
     /// Comprehensive performance test for educational overlay rendering
     func testEducationalOverlayPerformance() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -178,14 +178,14 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let iterations = 100
         let config = VisionEducationOverlaySystem.EducationalOverlayConfig(
             contentType: .motionSensitivity,
             complexity: .advanced,
             breed: "labrador"
         )
-        
+
         measure {
             for _ in 0..<iterations {
                 do {
@@ -199,9 +199,9 @@ class VisionEducationOverlaySystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Utility Methods
-    
+
     /// Create a test texture for rendering
     private func createTestTexture(device: MTLDevice) -> MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
@@ -218,7 +218,7 @@ class VisionEducationOverlaySystemTests: XCTestCase {
 // MARK: - Extension for EducationComplexity Raw Value
 extension VisionEducationOverlaySystem.EducationComplexity: RawRepresentable {
     public typealias RawValue = Int
-    
+
     public init?(rawValue: RawValue) {
         switch rawValue {
         case 0: self = .basic
@@ -228,7 +228,7 @@ extension VisionEducationOverlaySystem.EducationComplexity: RawRepresentable {
         default: return nil
         }
     }
-    
+
     public var rawValue: RawValue {
         switch self {
         case .basic: return 0
@@ -237,4 +237,4 @@ extension VisionEducationOverlaySystem.EducationComplexity: RawRepresentable {
         case .scientific: return 3
         }
     }
-} 
+}

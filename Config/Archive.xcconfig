@@ -1,0 +1,63 @@
+// Archive Configuration for DogTV+
+// Agent 1: Build System & Project Structure
+
+// Inherit from Release configuration
+#include "Release.xcconfig"
+
+// Archive-specific settings
+SKIP_INSTALL = NO
+INSTALL_PATH = /Applications
+DSTROOT = /tmp/DogTVPlus.dst
+
+// Code Signing for Distribution
+CODE_SIGN_IDENTITY = Apple Distribution
+PROVISIONING_PROFILE_SPECIFIER = 
+
+// Archive optimizations
+DEPLOYMENT_POSTPROCESSING = YES
+STRIP_INSTALLED_PRODUCT = YES
+SEPARATE_STRIP = YES
+COPY_PHASE_STRIP = YES
+
+// Bundle Settings for App Store
+PRODUCT_BUNDLE_IDENTIFIER = com.dogtv.plus
+PRODUCT_NAME = DogTV+
+BUNDLE_SHORT_VERSION_STRING = 1.0.0
+BUNDLE_VERSION = 1
+
+// App Store Connect settings
+APPLICATION_EXTENSION_API_ONLY = NO
+TARGETED_DEVICE_FAMILY = 3
+SUPPORTS_MACCATALYST = NO
+
+// Privacy and Security
+ENABLE_HARDENED_RUNTIME = YES
+ENABLE_LIBRARY_VALIDATION = YES
+ENABLE_APP_SANDBOX = YES
+
+// Bitcode (if required)
+ENABLE_BITCODE = NO
+BITCODE_GENERATION_MODE = bitcode
+
+// Symbol visibility
+GCC_SYMBOLS_PRIVATE_EXTERN = YES
+GCC_INLINES_ARE_PRIVATE_EXTERN = YES
+
+// Documentation
+GENERATE_DOCUMENTATION = YES
+DOCUMENTATION_FOLDER_PATH = Documentation
+
+// Asset optimization
+COMPRESS_PNG_FILES = YES
+REMOVE_CVS_FROM_RESOURCES = YES
+REMOVE_GIT_FROM_RESOURCES = YES
+REMOVE_HG_FROM_RESOURCES = YES
+REMOVE_SVN_FROM_RESOURCES = YES
+
+// Validation
+VALIDATE_PRODUCT = YES
+VALIDATE_WORKSPACE = YES
+
+// Testing (disabled for archive)
+ENABLE_TESTING_SEARCH_PATHS = NO
+ENABLE_TESTABILITY = NO

@@ -1,11 +1,11 @@
-import XCTest
 import Foundation
+import XCTest
 
 @testable import DogTV_
 
 /**
  * UsabilityTestingSystemTests: Comprehensive testing for usability testing framework
- * 
+ *
  * Focuses on:
  * - Test scenario simulation
  * - Behavioral observation
@@ -13,26 +13,25 @@ import Foundation
  * - Scientific insights generation
  */
 class UsabilityTestingSystemTests: XCTestCase {
-    
     // MARK: - Test Properties
-    
+
     /// Usability testing system for testing
     private var usabilityTestingSystem: UsabilityTestingSystem!
-    
+
     // MARK: - Setup and Teardown
-    
+
     override func setUp() {
         super.setUp()
         usabilityTestingSystem = UsabilityTestingSystem()
     }
-    
+
     override func tearDown() {
         usabilityTestingSystem = nil
         super.tearDown()
     }
-    
+
     // MARK: - Test Scenario Tests
-    
+
     /// Test all test scenarios
     func testAllTestScenarios() {
         let scenarios: [UsabilityTestingSystem.TestScenario] = [
@@ -42,7 +41,7 @@ class UsabilityTestingSystemTests: XCTestCase {
             .socialSharing,
             .performancePerception
         ]
-        
+
         let participantProfiles = [
             UsabilityTestingSystem.ParticipantProfile(
                 age: 35,
@@ -57,7 +56,7 @@ class UsabilityTestingSystemTests: XCTestCase {
                 previousTVExperience: false
             )
         ]
-        
+
         for scenario in scenarios {
             for profile in participantProfiles {
                 let config = UsabilityTestingSystem.UsabilityTestConfig(
@@ -66,19 +65,19 @@ class UsabilityTestingSystemTests: XCTestCase {
                     participantProfile: profile,
                     privacyLevel: .anonymized
                 )
-                
+
                 let results = usabilityTestingSystem.conductUsabilityTest(config: config)
-                
+
                 XCTAssertEqual(results.testConfig.scenario, scenario, "Scenario mismatch")
                 XCTAssertEqual(results.testConfig.participantProfile.dogBreed, profile.dogBreed, "Participant profile mismatch")
-                
+
                 // Validate behavioral observations
                 XCTAssertFalse(results.behavioralObservations.isEmpty, "No behavioral observations recorded")
                 XCTAssertTrue(
                     results.behavioralObservations.allSatisfy { $0.duration > 0 },
                     "Invalid observation duration"
                 )
-                
+
                 // Validate user experience ratings
                 XCTAssertFalse(results.userExperienceRatings.isEmpty, "No user experience ratings recorded")
                 XCTAssertTrue(
@@ -88,9 +87,9 @@ class UsabilityTestingSystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Behavioral Observation Tests
-    
+
     /// Test behavioral observation generation
     func testBehavioralObservationGeneration() {
         let scenarios: [UsabilityTestingSystem.TestScenario] = [
@@ -98,13 +97,13 @@ class UsabilityTestingSystemTests: XCTestCase {
             .visionModeComparison,
             .educationalContent
         ]
-        
+
         let expectedResponseTypes: [UsabilityTestingSystem.TestScenario: [UsabilityTestingSystem.DogBehavioralResponse]] = [
             .initialOnboarding: [.highEngagement, .moderateEngagement, .lowEngagement],
             .visionModeComparison: [.moderateEngagement],
             .educationalContent: [.highEngagement]
         ]
-        
+
         for scenario in scenarios {
             let config = UsabilityTestingSystem.UsabilityTestConfig(
                 scenario: scenario,
@@ -114,14 +113,14 @@ class UsabilityTestingSystemTests: XCTestCase {
                     dogAge: 5
                 )
             )
-            
+
             let results = usabilityTestingSystem.conductUsabilityTest(config: config)
-            
+
             XCTAssertFalse(results.behavioralObservations.isEmpty, "No behavioral observations for \(scenario)")
-            
+
             if let expectedResponses = expectedResponseTypes[scenario] {
                 let observedResponses = results.behavioralObservations.map { $0.response }
-                
+
                 for expectedResponse in expectedResponses {
                     XCTAssertTrue(
                         observedResponses.contains(expectedResponse),
@@ -131,9 +130,9 @@ class UsabilityTestingSystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - User Experience Rating Tests
-    
+
     /// Test user experience rating generation
     func testUserExperienceRatingGeneration() {
         let categories: [UsabilityTestingSystem.UserExperienceCategory] = [
@@ -143,7 +142,7 @@ class UsabilityTestingSystemTests: XCTestCase {
             .entertainmentFactor,
             .scientificInsight
         ]
-        
+
         let config = UsabilityTestingSystem.UsabilityTestConfig(
             scenario: .educationalContent,
             participantProfile: UsabilityTestingSystem.ParticipantProfile(
@@ -152,21 +151,22 @@ class UsabilityTestingSystemTests: XCTestCase {
                 dogAge: 3
             )
         )
-        
+
         let results = usabilityTestingSystem.conductUsabilityTest(config: config)
-        
+
         XCTAssertFalse(results.userExperienceRatings.isEmpty, "No user experience ratings generated")
-        
+
         for category in categories {
-            let rating = results.userExperienceRatings.first { $0.category == category }
-            
-            XCTAssertNotNil(rating, "Missing rating for category \(category)")
-            XCTAssertTrue(rating!.score >= 1.0 && rating!.score <= 5.0, "Invalid rating score")
+            guard let rating = results.userExperienceRatings.first(where: { $0.category == category }) else {
+                XCTFail("Missing rating for category \(category)")
+                return
+            }
+            XCTAssertTrue(rating.score >= 1.0 && rating.score <= 5.0, "Invalid rating score")
         }
     }
-    
+
     // MARK: - Scientific Insights Tests
-    
+
     /// Test scientific insights generation
     func testScientificInsightsGeneration() {
         let scenarios: [UsabilityTestingSystem.TestScenario] = [
@@ -174,7 +174,7 @@ class UsabilityTestingSystemTests: XCTestCase {
             .educationalContent,
             .performancePerception
         ]
-        
+
         for scenario in scenarios {
             let config = UsabilityTestingSystem.UsabilityTestConfig(
                 scenario: scenario,
@@ -184,13 +184,16 @@ class UsabilityTestingSystemTests: XCTestCase {
                     dogAge: 6
                 )
             )
-            
+
             let results = usabilityTestingSystem.conductUsabilityTest(config: config)
-            
-            XCTAssertNotNil(results.scientificInsights, "No scientific insights generated")
-            XCTAssertFalse(results.scientificInsights!.isEmpty, "Scientific insights list is empty")
-            
-            for insight in results.scientificInsights! {
+
+            guard let insights = results.scientificInsights else {
+                XCTFail("No scientific insights generated")
+                return
+            }
+            XCTAssertFalse(insights.isEmpty, "Scientific insights list is empty")
+
+            for insight in insights {
                 XCTAssertFalse(insight.isEmpty, "Empty scientific insight")
                 XCTAssertTrue(
                     insight.contains("Engagement") || insight.contains("Rating"),
@@ -199,9 +202,9 @@ class UsabilityTestingSystemTests: XCTestCase {
             }
         }
     }
-    
+
     // MARK: - Privacy Level Tests
-    
+
     /// Test different privacy levels
     func testPrivacyLevels() {
         let privacyLevels: [UsabilityTestingSystem.PrivacyLevel] = [
@@ -210,7 +213,7 @@ class UsabilityTestingSystemTests: XCTestCase {
             .detailed,
             .scientific
         ]
-        
+
         for privacyLevel in privacyLevels {
             let config = UsabilityTestingSystem.UsabilityTestConfig(
                 scenario: .socialSharing,
@@ -221,25 +224,25 @@ class UsabilityTestingSystemTests: XCTestCase {
                 ),
                 privacyLevel: privacyLevel
             )
-            
+
             let results = usabilityTestingSystem.conductUsabilityTest(config: config)
-            
+
             XCTAssertEqual(
                 results.testConfig.privacyLevel,
                 privacyLevel,
                 "Privacy level mismatch for \(privacyLevel)"
             )
-            
+
             // Additional privacy-specific assertions can be added here
         }
     }
-    
+
     // MARK: - Performance Tests
-    
+
     /// Comprehensive performance test for usability testing
     func testUsabilityTestingPerformance() {
         let iterations = 50
-        
+
         measure {
             for _ in 0..<iterations {
                 let config = UsabilityTestingSystem.UsabilityTestConfig(
@@ -250,9 +253,9 @@ class UsabilityTestingSystemTests: XCTestCase {
                         dogAge: 3
                     )
                 )
-                
+
                 _ = usabilityTestingSystem.conductUsabilityTest(config: config)
             }
         }
     }
-} 
+}

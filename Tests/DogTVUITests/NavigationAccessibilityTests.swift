@@ -26,7 +26,7 @@ class NavigationAccessibilityTests: XCTestCase {
 
     func testLayoutOnDifferentResolutions() throws {
         // This test should run on multiple simulated resolutions; stubbed assertion
-        XCTAssertTrue(app.windows.count > 0)
+        XCTAssertTrue(!app.windows.isEmpty)
     }
 
     func testGestureRecognition() throws {
@@ -41,4 +41,4 @@ class NavigationAccessibilityTests: XCTestCase {
         // In real tests, use XCUISiriService
         XCTAssertTrue(true, "Siri voice control integration placeholder")
     }
-} 
+}

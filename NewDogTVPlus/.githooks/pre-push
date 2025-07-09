@@ -1,0 +1,43 @@
+#!/bin/sh
+# Pre-push hook for DogTV+ project
+# This hook runs comprehensive checks before pushing to remote
+
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Run full test suite
+echo "🧪 Running comprehensive test suite..."
+if ! swift test; then
+    echo "❌ Test suite failed. Please fix all tests before pushing."
+    exit 1
+fi
+
+# Check for TODO/FIXME comments in public API
+echo "📋 Checking for unresolved TODOs in public APIs..."
+if grep -r "TODO\|FIXME" Sources/ --include="*.swift" | grep -E "(public|open)" >/dev/null; then
+    echo "⚠️  Found TODO/FIXME comments in public APIs:"
+    grep -r "TODO\|FIXME" Sources/ --include="*.swift" | grep -E "(public|open)"
+    echo "   Consider resolving these before pushing to main branch."
+fi
+
+# Check package resolution
+echo "📦 Verifying package dependencies..."
+if ! swift package resolve; then
+    echo "❌ Package dependency resolution failed."
+    exit 1
+fi
+
+# Build for all supported platforms (if possible)
+echo "🏗️  Building for multiple platforms..."
+for platform in macos tvos-simulator; do
+    echo "   Building for $platform..."
+    if ! swift build --triple arm64-apple-$platform; then
+        echo "❌ Build failed for $platform"
+        # Don't exit on platform build failure, just warn
+        echo "⚠️  Warning: Platform-specific build issue detected"
+    fi
+done
+
+echo "✅ All pre-push checks completed!"
+exit 0

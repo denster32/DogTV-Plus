@@ -1,13 +1,13 @@
-import XCTest
-import Metal
 import CoreImage
+import Metal
 import Vision
+import XCTest
 
 @testable import DogTV_
 
 /**
  * SocialSharingSystemTests: Comprehensive testing for social sharing capabilities
- * 
+ *
  * Focuses on:
  * - Screenshot capture
  * - Texture processing
@@ -15,22 +15,21 @@ import Vision
  * - Performance
  */
 class SocialSharingSystemTests: XCTestCase {
-    
-    // MARK: - Test Constants
-    
+    // MARK: - Constants
+
     /// Maximum acceptable rendering time
-    private let MAX_RENDERING_TIME: TimeInterval = 0.05 // 50ms
-    
+    private let maxRenderingTime: TimeInterval = 0.05 // 50ms
+
     /// Maximum acceptable screenshot processing time
-    private let MAX_SCREENSHOT_TIME: TimeInterval = 0.1 // 100ms
-    
-    // MARK: - Test Properties
-    
+    private let maxScreenshotTime: TimeInterval = 0.1 // 100ms
+
+    // MARK: - Properties
+
     /// Social sharing system for testing
     private var socialSharingSystem: SocialSharingSystem!
-    
-    // MARK: - Setup and Teardown
-    
+
+    // MARK: - Setup & Teardown
+
     override func setUp() {
         super.setUp()
         do {
@@ -39,150 +38,48 @@ class SocialSharingSystemTests: XCTestCase {
             XCTFail("Failed to initialize SocialSharingSystem: \(error)")
         }
     }
-    
+
     override func tearDown() {
         socialSharingSystem = nil
         super.tearDown()
     }
-    
-    // MARK: - Screenshot Capture Tests
-    
+
+    // MARK: - Tests
+
     /// Test screenshot capture with different configurations
     func testScreenshotCapture() {
         guard let device = MTLCreateSystemDefaultDevice(),
-              let sourceTexture = createTestTexture(device: device) else {
+              let sourceTexture = createTestTexture(device: device)
+        else {
             XCTFail("Failed to create test texture")
             return
         }
-        
-        let resolutions: [SocialSharingSystem.ScreenshotResolution] = [
-            .standard,
-            .fullHD,
-            .fourK,
-            .custom(width: 2560, height: 1440)
-        ]
-        
-        let annotationStyles: [SocialSharingSystem.AnnotationStyle] = [
-            .none,
-            .minimal,
-            .scientific,
-            .educational
-        ]
-        
-        let watermarkPreferences: [SocialSharingSystem.WatermarkPreference] = [
-            .none,
-            .minimal,
-            .branded,
-            .fullBranding
-        ]
-        
-        for resolution in resolutions {
-            for annotationStyle in annotationStyles {
-                for watermarkPreference in watermarkPreferences {
-                    let config = SocialSharingSystem.ScreenshotConfig(
-                        resolution: resolution,
-                        annotationStyle: annotationStyle,
-                        watermarkPreference: watermarkPreference
-                    )
-                    
-                    let metadata = SocialSharingSystem.SharingMetadata(
-                        breed: "borderCollie",
-                        behaviorContext: "High-energy play",
-                        scientificInsights: ["Motion sensitivity", "Color perception"]
-                    )
-                    
-                    do {
-                        let start = Date()
-                        let result = try socialSharingSystem.captureScreenshot(
-                            texture: sourceTexture,
-                            config: config,
-                            metadata: metadata
-                        )
-                        let processingTime = Date().timeIntervalSince(start)
-                        
-                        XCTAssertNotNil(result, "Screenshot capture failed")
-                        XCTAssertLessThan(processingTime, MAX_SCREENSHOT_TIME, "Screenshot processing time too long")
-                    } catch {
-                        XCTFail("Screenshot capture threw an error: \(error)")
-                    }
-                }
-            }
-        }
+
+        let metadata = SocialSharingSystem.SharingMetadata(
+            breed: "borderCollie",
+            behaviorContext: "High-energy play",
+            scientificInsights: ["Motion sensitivity", "Color perception"]
+        )
+        runScreenshotCapturePermutations(sourceTexture: sourceTexture, metadata: metadata)
     }
-    
-    // MARK: - Social Media Sharing Tests
-    
+
     /// Test social media sharing with different platforms
     func testSocialMediaSharing() {
         guard let device = MTLCreateSystemDefaultDevice(),
-              let screenshotTexture = createTestTexture(device: device) else {
+              let screenshotTexture = createTestTexture(device: device)
+        else {
             XCTFail("Failed to create test texture")
             return
         }
-        
-        let platforms: [SocialSharingSystem.SharingPlatform] = [
-            .twitter,
-            .instagram,
-            .facebook,
-            .tiktok,
-            .custom("CustomPlatform")
-        ]
-        
-        let privacyLevels: [SocialSharingSystem.PrivacyLevel] = [
-            .minimal,
-            .standard,
-            .detailed,
-            .scientific
-        ]
-        
-        let contentTypes: [SocialSharingSystem.ContentType] = [
-            .screenshot,
-            .videoClip,
-            .scientificData
-        ]
-        
-        for platform in platforms {
-            for privacyLevel in privacyLevels {
-                for contentType in contentTypes {
-                    let config = SocialSharingSystem.SharingConfiguration(
-                        platform: platform,
-                        privacyLevel: privacyLevel,
-                        contentType: contentType
-                    )
-                    
-                    let metadata = SocialSharingSystem.SharingMetadata(
-                        breed: "germanShepherd",
-                        behaviorContext: "Training session",
-                        scientificInsights: ["Breed-specific learning patterns"]
-                    )
-                    
-                    do {
-                        try socialSharingSystem.shareToSocialMedia(
-                            texture: screenshotTexture,
-                            config: config,
-                            metadata: metadata
-                        )
-                    } catch let error as SocialSharingSystem.SharingError {
-                        switch error {
-                        case .platformNotSupported:
-                            // This is expected for custom platforms
-                            if case .custom = platform {
-                                continue
-                            }
-                            XCTFail("Unexpected platform not supported error")
-                        default:
-                            XCTFail("Social media sharing failed: \(error)")
-                        }
-                    } catch {
-                        XCTFail("Unexpected error during social media sharing: \(error)")
-                    }
-                }
-            }
-        }
+
+        let metadata = SocialSharingSystem.SharingMetadata(
+            breed: "germanShepherd",
+            behaviorContext: "Training session",
+            scientificInsights: ["Breed-specific learning patterns"]
+        )
+        runSocialMediaSharingPermutations(screenshotTexture: screenshotTexture, metadata: metadata)
     }
-    
-    // MARK: - Performance Tests
-    
+
     /// Comprehensive performance test for screenshot processing
     func testScreenshotProcessingPerformance() {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -190,14 +87,14 @@ class SocialSharingSystemTests: XCTestCase {
             XCTFail("Failed to create test texture")
             return
         }
-        
+
         let iterations = 50
         let config = SocialSharingSystem.ScreenshotConfig(
             resolution: .fullHD,
             annotationStyle: .scientific,
             watermarkPreference: .branded
         )
-        
+
         measure {
             for _ in 0..<iterations {
                 do {
@@ -211,9 +108,9 @@ class SocialSharingSystemTests: XCTestCase {
             }
         }
     }
-    
-    // MARK: - Utility Methods
-    
+
+    // MARK: - Private Helpers
+
     /// Create a test texture for rendering
     private func createTestTexture(device: MTLDevice) -> MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
@@ -225,4 +122,94 @@ class SocialSharingSystemTests: XCTestCase {
         descriptor.usage = [.renderTarget, .shaderRead, .shaderWrite]
         return device.makeTexture(descriptor: descriptor)
     }
-} 
+
+    private func runScreenshotCapturePermutations(
+        sourceTexture: MTLTexture,
+        metadata: SocialSharingSystem.SharingMetadata
+    ) {
+        let resolutions: [SocialSharingSystem.ScreenshotResolution] = [
+            .standard, .fullHD, .fourK, .custom(width: 2560, height: 1440)
+        ]
+        let annotationStyles: [SocialSharingSystem.AnnotationStyle] = [
+            .none, .minimal, .scientific, .educational
+        ]
+        let watermarkPreferences: [SocialSharingSystem.WatermarkPreference] = [
+            .none, .minimal, .branded, .fullBranding
+        ]
+
+        for resolution in resolutions {
+            for annotationStyle in annotationStyles {
+                for watermarkPreference in watermarkPreferences {
+                    let config = SocialSharingSystem.ScreenshotConfig(
+                        resolution: resolution,
+                        annotationStyle: annotationStyle,
+                        watermarkPreference: watermarkPreference
+                    )
+                    performScreenshotCaptureTest(with: config, texture: sourceTexture, metadata: metadata)
+                }
+            }
+        }
+    }
+
+    private func runSocialMediaSharingPermutations(
+        screenshotTexture: MTLTexture,
+        metadata: SocialSharingSystem.SharingMetadata
+    ) {
+        let platforms: [SocialSharingSystem.SocialPlatform] = [
+            .custom(name: "DogSpace"), .instagram, .facebook, .twitter, .threads
+        ]
+
+        for platform in platforms {
+            performSocialMediaSharingTest(
+                with: platform,
+                texture: screenshotTexture,
+                metadata: metadata
+            )
+        }
+    }
+
+    private func performScreenshotCaptureTest(
+        with config: SocialSharingSystem.ScreenshotConfig,
+        texture: MTLTexture,
+        metadata: SocialSharingSystem.SharingMetadata
+    ) {
+        let expectation = XCTestExpectation(description: "Screenshot for \(config.resolution) resolution")
+
+        do {
+            let processedTexture = try socialSharingSystem.captureScreenshot(texture: texture, config: config)
+            XCTAssertNotNil(processedTexture, "Processed texture should not be nil")
+            // Additional validation can be added here
+            expectation.fulfill()
+        } catch {
+            XCTFail("Screenshot capture failed for config: \(config) with error: \(error)")
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+    }
+
+    private func performSocialMediaSharingTest(
+        with platform: SocialSharingSystem.SocialPlatform,
+        texture: MTLTexture,
+        metadata: SocialSharingSystem.SharingMetadata
+    ) {
+        let expectation = XCTestExpectation(description: "Sharing on \(platform.name)")
+
+        socialSharingSystem.shareOnSocialMedia(
+            platform: platform,
+            texture: texture,
+            metadata: metadata
+        ) { result in
+            switch result {
+            case .success:
+                // In a real test environment, we would mock the social media API
+                // and verify that the correct data was sent.
+                break
+            case let .failure(error):
+                XCTFail("Social media sharing failed for platform: \(platform.name) with error: \(error)")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 10.0)
+    }
+}

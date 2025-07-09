@@ -27,15 +27,15 @@ import Combine
  * - Comprehensive test reporting
  */
 public class ComprehensiveTestingSystem: ObservableObject {
-    
+
     // MARK: - Published Properties
     @Published public var testStatus: TestStatus = .notStarted
-    @Published public var testResults: TestResults = TestResults()
-    @Published public var coverageMetrics: CoverageMetrics = CoverageMetrics()
-    @Published public var performanceMetrics: PerformanceTestMetrics = PerformanceTestMetrics()
-    @Published public var accessibilityResults: AccessibilityResults = AccessibilityResults()
-    @Published public var securityResults: SecurityTestResults = SecurityTestResults()
-    
+    @Published public var testResults = TestResults()
+    @Published public var coverageMetrics = CoverageMetrics()
+    @Published public var performanceMetrics = PerformanceTestMetrics()
+    @Published public var accessibilityResults = AccessibilityResults()
+    @Published public var securityResults = SecurityTestResults()
+
     // MARK: - Testing Components
     private let unitTestRunner = UnitTestRunner()
     private let integrationTestRunner = IntegrationTestRunner()
@@ -45,14 +45,14 @@ public class ComprehensiveTestingSystem: ObservableObject {
     private let securityTestRunner = SecurityTestRunner()
     private let crossPlatformTestRunner = CrossPlatformTestRunner()
     private let automationPipeline = TestAutomationPipeline()
-    
+
     // MARK: - Test Configuration
     private var testConfig: TestConfiguration
     private var coverageConfig: CoverageConfiguration
     private var performanceConfig: PerformanceTestConfiguration
-    
+
     // MARK: - Data Structures
-    
+
     public struct TestResults: Codable {
         var totalTests: Int = 0
         var passedTests: Int = 0
@@ -60,10 +60,10 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var skippedTests: Int = 0
         var testDuration: TimeInterval = 0.0
         var testSuites: [TestSuite] = []
-        var lastRun: Date = Date()
+        var lastRun = Date()
         var successRate: Float = 0.0
     }
-    
+
     public struct TestSuite: Codable, Identifiable {
         public let id = UUID()
         var name: String
@@ -73,9 +73,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var passed: Int = 0
         var failed: Int = 0
         var skipped: Int = 0
-        var lastRun: Date = Date()
+        var lastRun = Date()
     }
-    
+
     public enum TestType: String, CaseIterable, Codable {
         case unit = "Unit"
         case integration = "Integration"
@@ -85,7 +85,7 @@ public class ComprehensiveTestingSystem: ObservableObject {
         case security = "Security"
         case crossPlatform = "Cross-Platform"
     }
-    
+
     public struct TestCase: Codable, Identifiable {
         public let id = UUID()
         var name: String
@@ -94,9 +94,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var duration: TimeInterval = 0.0
         var errorMessage: String?
         var stackTrace: String?
-        var lastRun: Date = Date()
+        var lastRun = Date()
     }
-    
+
     public enum TestStatus: String, CaseIterable, Codable {
         case notStarted = "Not Started"
         case running = "Running"
@@ -106,7 +106,7 @@ public class ComprehensiveTestingSystem: ObservableObject {
         case error = "Error"
         case completed = "Completed"
     }
-    
+
     public struct CoverageMetrics: Codable {
         var totalLines: Int = 0
         var coveredLines: Int = 0
@@ -114,18 +114,18 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var coveragePercentage: Float = 0.0
         var fileCoverage: [FileCoverage] = []
         var functionCoverage: [FunctionCoverage] = []
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public struct FileCoverage: Codable, Identifiable {
         public let id = UUID()
         var fileName: String
         var totalLines: Int
         var coveredLines: Int
         var coveragePercentage: Float
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public struct FunctionCoverage: Codable, Identifiable {
         public let id = UUID()
         var functionName: String
@@ -133,9 +133,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var totalLines: Int
         var coveredLines: Int
         var coveragePercentage: Float
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public struct PerformanceTestMetrics: Codable {
         var launchTime: TimeInterval = 0.0
         var memoryUsage: Float = 0.0
@@ -145,9 +145,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var networkLatency: TimeInterval = 0.0
         var diskUsage: Float = 0.0
         var performanceScore: Float = 0.0
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public struct AccessibilityResults: Codable {
         var totalIssues: Int = 0
         var criticalIssues: Int = 0
@@ -155,9 +155,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var infoIssues: Int = 0
         var accessibilityScore: Float = 0.0
         var issues: [AccessibilityIssue] = []
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public struct AccessibilityIssue: Codable, Identifiable {
         public let id = UUID()
         var type: AccessibilityIssueType
@@ -165,9 +165,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var description: String
         var element: String
         var recommendation: String
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public enum AccessibilityIssueType: String, CaseIterable, Codable {
         case missingLabel = "Missing Label"
         case insufficientContrast = "Insufficient Contrast"
@@ -176,13 +176,13 @@ public class ComprehensiveTestingSystem: ObservableObject {
         case screenReader = "Screen Reader"
         case dynamicType = "Dynamic Type"
     }
-    
+
     public enum IssueSeverity: String, CaseIterable, Codable {
         case critical = "Critical"
         case warning = "Warning"
         case info = "Info"
     }
-    
+
     public struct SecurityTestResults: Codable {
         var totalVulnerabilities: Int = 0
         var criticalVulnerabilities: Int = 0
@@ -191,9 +191,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var lowVulnerabilities: Int = 0
         var securityScore: Float = 0.0
         var vulnerabilities: [SecurityVulnerability] = []
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public struct SecurityVulnerability: Codable, Identifiable {
         public let id = UUID()
         var type: VulnerabilityType
@@ -201,9 +201,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
         var description: String
         var location: String
         var recommendation: String
-        var lastUpdated: Date = Date()
+        var lastUpdated = Date()
     }
-    
+
     public enum VulnerabilityType: String, CaseIterable, Codable {
         case sqlInjection = "SQL Injection"
         case xss = "Cross-Site Scripting"
@@ -212,160 +212,153 @@ public class ComprehensiveTestingSystem: ObservableObject {
         case weakEncryption = "Weak Encryption"
         case improperAuthentication = "Improper Authentication"
     }
-    
+
     public enum VulnerabilitySeverity: String, CaseIterable, Codable {
         case critical = "Critical"
         case high = "High"
         case medium = "Medium"
         case low = "Low"
     }
-    
+
     // MARK: - Initialization
-    
+
     public init() {
         self.testConfig = TestConfiguration()
         self.coverageConfig = CoverageConfiguration()
         self.performanceConfig = PerformanceTestConfiguration()
-        
+
         setupTestingSystem()
         print("ComprehensiveTestingSystem initialized")
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Implement unit tests for all core functionality
     public func implementUnitTests() async -> UnitTestResults {
         testStatus = .running
-        
+
         do {
             let results = try await unitTestRunner.runUnitTests(config: testConfig)
-            
+
             await MainActor.run {
                 testResults.testSuites.append(results.testSuite)
                 updateTestResults()
             }
-            
+
             print("Unit tests completed: \(results.passedTests) passed, \(results.failedTests) failed")
-            
+
             return results
-            
         } catch {
             testStatus = .error
             throw ComprehensiveTestingError.unitTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Add integration tests for system interactions
     public func addIntegrationTests() async -> IntegrationTestResults {
         do {
             let results = try await integrationTestRunner.runIntegrationTests(config: testConfig)
-            
+
             await MainActor.run {
                 testResults.testSuites.append(results.testSuite)
                 updateTestResults()
             }
-            
+
             print("Integration tests completed: \(results.passedTests) passed, \(results.failedTests) failed")
-            
+
             return results
-            
         } catch {
             throw ComprehensiveTestingError.integrationTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Create UI tests for all user flows
     public func createUITests() async -> UITestResults {
         do {
             let results = try await uiTestRunner.runUITests(config: testConfig)
-            
+
             await MainActor.run {
                 testResults.testSuites.append(results.testSuite)
                 updateTestResults()
             }
-            
+
             print("UI tests completed: \(results.passedTests) passed, \(results.failedTests) failed")
-            
+
             return results
-            
         } catch {
             throw ComprehensiveTestingError.uiTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Implement performance tests
     public func implementPerformanceTests() async -> PerformanceTestResults {
         do {
             let results = try await performanceTestRunner.runPerformanceTests(config: performanceConfig)
-            
+
             await MainActor.run {
                 performanceMetrics = results.metrics
             }
-            
+
             print("Performance tests completed with score: \(results.metrics.performanceScore)")
-            
+
             return results
-            
         } catch {
             throw ComprehensiveTestingError.performanceTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Add accessibility tests
     public func addAccessibilityTests() async -> AccessibilityTestResults {
         do {
             let results = try await accessibilityTestRunner.runAccessibilityTests(config: testConfig)
-            
+
             await MainActor.run {
                 accessibilityResults = results.results
             }
-            
+
             print("Accessibility tests completed with score: \(results.results.accessibilityScore)")
-            
+
             return results
-            
         } catch {
             throw ComprehensiveTestingError.accessibilityTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Create security tests
     public func createSecurityTests() async -> SecurityTestResults {
         do {
             let results = try await securityTestRunner.runSecurityTests(config: testConfig)
-            
+
             await MainActor.run {
                 securityResults = results.results
             }
-            
+
             print("Security tests completed with score: \(results.results.securityScore)")
-            
+
             return results
-            
         } catch {
             throw ComprehensiveTestingError.securityTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Implement cross-platform tests
     public func implementCrossPlatformTests() async -> CrossPlatformTestResults {
         do {
             let results = try await crossPlatformTestRunner.runCrossPlatformTests(config: testConfig)
-            
+
             await MainActor.run {
                 testResults.testSuites.append(results.testSuite)
                 updateTestResults()
             }
-            
+
             print("Cross-platform tests completed: \(results.passedTests) passed, \(results.failedTests) failed")
-            
+
             return results
-            
         } catch {
             throw ComprehensiveTestingError.crossPlatformTestFailed(error.localizedDescription)
         }
     }
-    
+
     /// Add automated testing pipeline
     public func addAutomatedTestingPipeline() -> TestAutomationSystem {
         let system = TestAutomationSystem(
@@ -373,13 +366,13 @@ public class ComprehensiveTestingSystem: ObservableObject {
             triggers: testConfig.automationTriggers,
             reporting: testConfig.automationReporting
         )
-        
+
         system.configure()
         print("Automated testing pipeline added")
-        
+
         return system
     }
-    
+
     /// Create testing documentation and reports
     public func createTestingDocumentationAndReports() -> TestingDocumentation {
         let documentation = TestingDocumentation(
@@ -391,16 +384,16 @@ public class ComprehensiveTestingSystem: ObservableObject {
             securityReport: generateSecurityReport(),
             automationGuide: generateAutomationGuide()
         )
-        
+
         print("Testing documentation and reports created")
-        
+
         return documentation
     }
-    
+
     /// Run comprehensive test suite
     public func runComprehensiveTestSuite() async throws {
         testStatus = .running
-        
+
         // Run all test types
         let unitResults = await implementUnitTests()
         let integrationResults = await addIntegrationTests()
@@ -409,14 +402,14 @@ public class ComprehensiveTestingSystem: ObservableObject {
         let accessibilityResults = await addAccessibilityTests()
         let securityResults = await createSecurityTests()
         let crossPlatformResults = await implementCrossPlatformTests()
-        
+
         // Update coverage metrics
         await updateCoverageMetrics()
-        
+
         // Check overall results
-        let totalFailed = unitResults.failedTests + integrationResults.failedTests + 
+        let totalFailed = unitResults.failedTests + integrationResults.failedTests +
                          uiResults.failedTests + crossPlatformResults.failedTests
-        
+
         if totalFailed == 0 {
             testStatus = .completed
             print("All tests passed successfully!")
@@ -425,9 +418,9 @@ public class ComprehensiveTestingSystem: ObservableObject {
             throw ComprehensiveTestingError.testSuiteFailed("\(totalFailed) tests failed")
         }
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func setupTestingSystem() {
         // Configure testing components
         unitTestRunner.configure(testConfig)
@@ -437,31 +430,31 @@ public class ComprehensiveTestingSystem: ObservableObject {
         accessibilityTestRunner.configure(testConfig)
         securityTestRunner.configure(testConfig)
         crossPlatformTestRunner.configure(testConfig)
-        
+
         // Setup test monitoring
         setupTestMonitoring()
     }
-    
+
     private func setupTestMonitoring() {
         // Monitor test execution
         Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             self?.updateTestStatus()
         }
     }
-    
+
     private func updateTestStatus() {
         // Update test status and metrics
         Task {
             await updateCoverageMetrics()
         }
     }
-    
+
     private func updateTestResults() {
         let totalTests = testResults.testSuites.reduce(0) { $0 + $1.tests.count }
         let passedTests = testResults.testSuites.reduce(0) { $0 + $1.passed }
         let failedTests = testResults.testSuites.reduce(0) { $0 + $1.failed }
         let skippedTests = testResults.testSuites.reduce(0) { $0 + $1.skipped }
-        
+
         testResults.totalTests = totalTests
         testResults.passedTests = passedTests
         testResults.failedTests = failedTests
@@ -469,19 +462,19 @@ public class ComprehensiveTestingSystem: ObservableObject {
         testResults.successRate = totalTests > 0 ? Float(passedTests) / Float(totalTests) : 0.0
         testResults.lastRun = Date()
     }
-    
+
     private func updateCoverageMetrics() async {
         let coverage = await unitTestRunner.getCoverageMetrics(config: coverageConfig)
-        
+
         await MainActor.run {
             coverageMetrics = coverage
         }
     }
-    
+
     private func generateTestPlan() -> String {
-        return """
+        """
         # Comprehensive Test Plan
-        
+
         ## Test Strategy
         - Unit tests for all core functionality
         - Integration tests for system interactions
@@ -490,19 +483,19 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Accessibility tests for compliance
         - Security tests for protection
         - Cross-platform tests for compatibility
-        
+
         ## Test Environment
         - iOS Simulator (multiple versions)
         - iPad Simulator
         - Apple TV Simulator
         - Physical devices for critical tests
-        
+
         ## Test Data
         - Synthetic test data
         - Real-world scenarios
         - Edge cases and error conditions
         - Performance benchmarks
-        
+
         ## Test Execution
         - Automated test execution
         - Continuous integration
@@ -510,30 +503,30 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Test result reporting
         """
     }
-    
+
     private func generateTestCases() -> String {
-        return """
+        """
         # Test Cases
-        
+
         ## Unit Tests
         - ProceduralContentGenerator tests
         - ContentDeliverySystem tests
         - UserManagementSystem tests
         - BehaviorAnalysisSystem tests
         - SecuritySystem tests
-        
+
         ## Integration Tests
         - End-to-end user flows
         - System component interactions
         - Data flow validation
         - Error handling scenarios
-        
+
         ## UI Tests
         - Navigation flows
         - User interactions
         - Accessibility compliance
         - Cross-device compatibility
-        
+
         ## Performance Tests
         - Launch time measurement
         - Memory usage monitoring
@@ -541,30 +534,30 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Network performance testing
         """
     }
-    
+
     private func generateCoverageReport() -> String {
-        return """
+        """
         # Code Coverage Report
-        
+
         ## Overall Coverage: \(coverageMetrics.coveragePercentage * 100)%
-        
+
         ## File Coverage
         \(coverageMetrics.fileCoverage.map { "- \($0.fileName): \($0.coveragePercentage * 100)%" }.joined(separator: "\n"))
-        
+
         ## Function Coverage
         \(coverageMetrics.functionCoverage.map { "- \($0.functionName): \($0.coveragePercentage * 100)%" }.joined(separator: "\n"))
-        
+
         ## Recommendations
         - Increase coverage for uncovered functions
         - Add tests for edge cases
         - Improve test data quality
         """
     }
-    
+
     private func generatePerformanceReport() -> String {
-        return """
+        """
         # Performance Test Report
-        
+
         ## Performance Metrics
         - Launch Time: \(performanceMetrics.launchTime)s
         - Memory Usage: \(performanceMetrics.memoryUsage)MB
@@ -573,7 +566,7 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Frame Rate: \(performanceMetrics.frameRate)fps
         - Network Latency: \(performanceMetrics.networkLatency)s
         - Performance Score: \(performanceMetrics.performanceScore * 100)%
-        
+
         ## Recommendations
         - Optimize launch time
         - Reduce memory usage
@@ -581,18 +574,18 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Enhance frame rate performance
         """
     }
-    
+
     private func generateAccessibilityReport() -> String {
-        return """
+        """
         # Accessibility Test Report
-        
+
         ## Accessibility Score: \(accessibilityResults.accessibilityScore * 100)%
-        
+
         ## Issues Found: \(accessibilityResults.totalIssues)
         - Critical: \(accessibilityResults.criticalIssues)
         - Warnings: \(accessibilityResults.warningIssues)
         - Info: \(accessibilityResults.infoIssues)
-        
+
         ## Recommendations
         - Fix critical accessibility issues
         - Add missing labels and alt text
@@ -600,19 +593,19 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Enhance screen reader support
         """
     }
-    
+
     private func generateSecurityReport() -> String {
-        return """
+        """
         # Security Test Report
-        
+
         ## Security Score: \(securityResults.securityScore * 100)%
-        
+
         ## Vulnerabilities Found: \(securityResults.totalVulnerabilities)
         - Critical: \(securityResults.criticalVulnerabilities)
         - High: \(securityResults.highVulnerabilities)
         - Medium: \(securityResults.mediumVulnerabilities)
         - Low: \(securityResults.lowVulnerabilities)
-        
+
         ## Recommendations
         - Address critical vulnerabilities immediately
         - Implement secure coding practices
@@ -620,23 +613,23 @@ public class ComprehensiveTestingSystem: ObservableObject {
         - Update security dependencies
         """
     }
-    
+
     private func generateAutomationGuide() -> String {
-        return """
+        """
         # Test Automation Guide
-        
+
         ## Automation Pipeline
         - Continuous integration setup
         - Automated test execution
         - Test result reporting
         - Failure notification
-        
+
         ## Best Practices
         - Test-driven development
         - Regular test maintenance
         - Parallel test execution
         - Comprehensive test coverage
-        
+
         ## Tools and Frameworks
         - XCTest for unit and UI tests
         - Performance testing tools
@@ -652,7 +645,7 @@ class UnitTestRunner {
     func configure(_ config: TestConfiguration) {
         // Configure unit test runner
     }
-    
+
     func runUnitTests(config: TestConfiguration) async throws -> UnitTestResults {
         // Simulate unit test execution
         let testSuite = TestSuite(
@@ -665,7 +658,7 @@ class UnitTestRunner {
             skipped: 5,
             lastRun: Date()
         )
-        
+
         return UnitTestResults(
             testSuite: testSuite,
             passedTests: 150,
@@ -673,10 +666,10 @@ class UnitTestRunner {
             skippedTests: 5
         )
     }
-    
+
     func getCoverageMetrics(config: CoverageConfiguration) async -> CoverageMetrics {
         // Simulate coverage metrics
-        return CoverageMetrics(
+        CoverageMetrics(
             totalLines: 10000,
             coveredLines: 9500,
             uncoveredLines: 500,
@@ -692,7 +685,7 @@ class IntegrationTestRunner {
     func configure(_ config: TestConfiguration) {
         // Configure integration test runner
     }
-    
+
     func runIntegrationTests(config: TestConfiguration) async throws -> IntegrationTestResults {
         // Simulate integration test execution
         let testSuite = TestSuite(
@@ -705,7 +698,7 @@ class IntegrationTestRunner {
             skipped: 2,
             lastRun: Date()
         )
-        
+
         return IntegrationTestResults(
             testSuite: testSuite,
             passedTests: 25,
@@ -719,7 +712,7 @@ class UITestRunner {
     func configure(_ config: TestConfiguration) {
         // Configure UI test runner
     }
-    
+
     func runUITests(config: TestConfiguration) async throws -> UITestResults {
         // Simulate UI test execution
         let testSuite = TestSuite(
@@ -732,7 +725,7 @@ class UITestRunner {
             skipped: 3,
             lastRun: Date()
         )
-        
+
         return UITestResults(
             testSuite: testSuite,
             passedTests: 40,
@@ -746,7 +739,7 @@ class PerformanceTestRunner {
     func configure(_ config: PerformanceTestConfiguration) {
         // Configure performance test runner
     }
-    
+
     func runPerformanceTests(config: PerformanceTestConfiguration) async throws -> PerformanceTestResults {
         // Simulate performance test execution
         let metrics = PerformanceTestMetrics(
@@ -760,7 +753,7 @@ class PerformanceTestRunner {
             performanceScore: 0.95,
             lastUpdated: Date()
         )
-        
+
         return PerformanceTestResults(metrics: metrics)
     }
 }
@@ -769,7 +762,7 @@ class AccessibilityTestRunner {
     func configure(_ config: TestConfiguration) {
         // Configure accessibility test runner
     }
-    
+
     func runAccessibilityTests(config: TestConfiguration) async throws -> AccessibilityTestResults {
         // Simulate accessibility test execution
         let results = AccessibilityResults(
@@ -781,7 +774,7 @@ class AccessibilityTestRunner {
             issues: [],
             lastUpdated: Date()
         )
-        
+
         return AccessibilityTestResults(results: results)
     }
 }
@@ -790,7 +783,7 @@ class SecurityTestRunner {
     func configure(_ config: TestConfiguration) {
         // Configure security test runner
     }
-    
+
     func runSecurityTests(config: TestConfiguration) async throws -> SecurityTestResults {
         // Simulate security test execution
         let results = SecurityTestResults(
@@ -803,7 +796,7 @@ class SecurityTestRunner {
             vulnerabilities: [],
             lastUpdated: Date()
         )
-        
+
         return SecurityTestResults(results: results)
     }
 }
@@ -812,7 +805,7 @@ class CrossPlatformTestRunner {
     func configure(_ config: TestConfiguration) {
         // Configure cross-platform test runner
     }
-    
+
     func runCrossPlatformTests(config: TestConfiguration) async throws -> CrossPlatformTestResults {
         // Simulate cross-platform test execution
         let testSuite = TestSuite(
@@ -825,7 +818,7 @@ class CrossPlatformTestRunner {
             skipped: 1,
             lastRun: Date()
         )
-        
+
         return CrossPlatformTestResults(
             testSuite: testSuite,
             passedTests: 30,
@@ -915,13 +908,13 @@ public class TestAutomationSystem {
     private let pipeline: [String: Any]
     private let triggers: [String]
     private let reporting: [String]
-    
+
     init(pipeline: [String: Any], triggers: [String], reporting: [String]) {
         self.pipeline = pipeline
         self.triggers = triggers
         self.reporting = reporting
     }
-    
+
     func configure() {
         // Configure automation system
     }
@@ -938,7 +931,7 @@ public enum ComprehensiveTestingError: Error, LocalizedError {
     case securityTestFailed(String)
     case crossPlatformTestFailed(String)
     case testSuiteFailed(String)
-    
+
     public var errorDescription: String? {
         switch self {
         case .unitTestFailed(let message):
@@ -959,4 +952,4 @@ public enum ComprehensiveTestingError: Error, LocalizedError {
             return "Test suite failed: \(message)"
         }
     }
-} 
+}
