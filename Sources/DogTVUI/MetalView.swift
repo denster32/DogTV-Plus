@@ -6,37 +6,46 @@ import DogTVCore
 import DogTVVision
 // swiftlint:enable import_organization
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
+// Temporarily disabling MetalView due to missing dependencies and compilation errors
+/*
 @available(iOS 13.0, *)
 struct MetalView: UIViewRepresentable {
-    @State private var renderer: MetalRenderer
+    @State private var renderer: Any // Temporarily disabled
     let sceneType: SceneType
 
     init(sceneType: SceneType) {
         self.sceneType = sceneType
-        do {
-            _renderer = State(initialValue: try MetalRenderer())
-        } catch {
-            fatalError("Failed to create Metal renderer: \(error)")
-        }
+        // Temporarily disabled due to missing implementation
+        // do {
+        //     _renderer = State(initialValue: try MetalRenderer())
+        // } catch {
+        //     fatalError("Failed to create Metal renderer: \(error)")
+        // }
     }
 
     @MainActor
     func makeUIView(context: Context) -> MTKView {
         let mtkView = MTKView()
-        guard let device = MTLCreateSystemDefaultDevice() else {
-            fatalError("Could not create Metal device")
-        }
-        mtkView.device = device
-        mtkView.delegate = context.coordinator
-        mtkView.clearColor = MTLClearColor(red: 0.1, green: 0.1, blue: 0.2, alpha: 1.0)
-        mtkView.enableSetNeedsDisplay = true
+        // Temporarily disabled due to missing implementation
+        // guard let device = MTLCreateSystemDefaultDevice() else {
+        //     fatalError("Could not create Metal device")
+        // }
+        // mtkView.device = device
+        // mtkView.delegate = context.coordinator
+        // mtkView.clearColor = MTLClearColor(red: 0.1, green: 0.1, blue: 0.2, alpha: 1.0)
+        // mtkView.enableSetNeedsDisplay = true
         return mtkView
     }
 
     @MainActor
     func updateUIView(_ uiView: MTKView, context: Context) {
-        context.coordinator.sceneType = sceneType
-        uiView.setNeedsDisplay(uiView.bounds)
+        // Temporarily disabled due to missing implementation
+        // context.coordinator.sceneType = sceneType
+        // uiView.setNeedsDisplay(uiView.bounds)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -45,10 +54,10 @@ struct MetalView: UIViewRepresentable {
 
     class Coordinator: NSObject, MTKViewDelegate {
         var parent: MetalView
-        var renderer: MetalRenderer
+        var renderer: Any // Temporarily disabled
         var sceneType: SceneType
 
-        init(_ parent: MetalView, renderer: MetalRenderer) {
+        init(_ parent: MetalView, renderer: Any) {
             self.parent = parent
             self.renderer = renderer
             self.sceneType = parent.sceneType
@@ -56,12 +65,15 @@ struct MetalView: UIViewRepresentable {
         }
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-            renderer.resize(size: size)
+            // Temporarily disabled due to missing implementation
+            // renderer.resize(size: size)
         }
 
         func draw(in view: MTKView) {
-            renderer.render(sceneType: sceneType, in: view)
+            // Temporarily disabled due to missing implementation
+            // renderer.render(sceneType: sceneType, in: view)
         }
     }
 }
+*/
 // swiftlint:enable availability_attributes

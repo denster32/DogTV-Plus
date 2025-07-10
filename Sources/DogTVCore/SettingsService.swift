@@ -16,7 +16,7 @@ public class SettingsService: ObservableObject {
     private let userDefaults: UserDefaults
     private let audioSettingsCache = Cache<String, AudioSettings>()
     private let userPreferencesCache = Cache<String, UserPreferences>()
-    private let analyticsService = AnalyticsService()
+    private let analyticsService: AnalyticsService = CoreAnalyticsService.shared
 
     // MARK: - Initialization
 
@@ -43,12 +43,12 @@ public class SettingsService: ObservableObject {
             }
             error = nil
             Task {
-                await analyticsService.trackEvent(AnalyticsEvent(name: "settings_saved_successfully"))
+                await analyticsService.trackEvent(.event(name: "settings_saved_successfully", attributes: nil))
             }
         } catch {
             self.error = error
             Task {
-                await analyticsService.trackEvent(AnalyticsEvent(name: "settings_save_failed", parameters: ["error": error.localizedDescription]))
+                await analyticsService.trackEvent(.event(name: "settings_save_failed", attributes: ["error": AnyEquatable(error.localizedDescription)]))
             }
         }
     }
@@ -59,7 +59,7 @@ public class SettingsService: ObservableObject {
         userPreferences = .default
         saveSettings()
         Task {
-            await analyticsService.trackEvent(AnalyticsEvent(name: "settings_reset"))
+            await analyticsService.trackEvent(.event(name: "settings_reset", attributes: nil))
         }
     }
 
@@ -74,7 +74,7 @@ public class SettingsService: ObservableObject {
         audioSettings.volume = volume
         saveSettings()
         Task {
-            await analyticsService.trackEvent(AnalyticsEvent(name: "master_volume_updated", parameters: ["volume": String(volume)]))
+            await analyticsService.trackEvent(.event(name: "master_volume_updated", attributes: ["volume": AnyEquatable(String(volume))]))
         }
     }
 
@@ -83,7 +83,7 @@ public class SettingsService: ObservableObject {
         audioSettings.includeNatureSounds = on
         saveSettings()
         Task {
-            await analyticsService.trackEvent(AnalyticsEvent(name: "nature_sounds_toggled", parameters: ["enabled": String(on)]))
+            await analyticsService.trackEvent(.event(name: "nature_sounds_toggled", attributes: ["enabled": AnyEquatable(String(on))]))
         }
     }
 
@@ -94,7 +94,7 @@ public class SettingsService: ObservableObject {
         userPreferences.colorScheme = scheme
         saveSettings()
         Task {
-            await analyticsService.trackEvent(AnalyticsEvent(name: "color_scheme_updated", parameters: ["scheme": scheme.rawValue]))
+            await analyticsService.trackEvent(.event(name: "color_scheme_updated", attributes: ["scheme": AnyEquatable(scheme.rawValue)]))
         }
     }
 
@@ -103,7 +103,7 @@ public class SettingsService: ObservableObject {
         userPreferences.isHighContrastEnabled = on
         saveSettings()
         Task {
-            await analyticsService.trackEvent(AnalyticsEvent(name: "high_contrast_toggled", parameters: ["enabled": String(on)]))
+            await analyticsService.trackEvent(.event(name: "high_contrast_toggled", attributes: ["enabled": AnyEquatable(String(on))]))
         }
     }
 

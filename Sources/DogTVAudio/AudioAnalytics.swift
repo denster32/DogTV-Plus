@@ -224,7 +224,7 @@ public class AudioAnalytics: ObservableObject {
         print("Audio Event: \(event)")
 
         // Here you would typically send to analytics service
-        analyticsService.logEvent(event.toAnalyticsEvent())
+        analyticsService.trackEvent(event.toAnalyticsEvent())
     }
 
     // MARK: - Private Methods
@@ -336,17 +336,17 @@ enum AudioEvent {
     func toAnalyticsEvent() -> AnalyticsEvent {
         switch self {
         case .sessionStarted(let scene):
-            return .sessionStart(attributes: ["scene": scene.rawValue])
+            return .sessionStart(attributes: ["scene": AnyEquatable(scene.rawValue)])
         case .sessionEnded(let duration):
-            return .sessionEnd(attributes: ["duration": duration])
+            return .sessionEnd(attributes: ["duration": AnyEquatable(duration)])
         case .sessionPaused:
             return .event(name: "audio_session_paused", attributes: nil)
         case .sessionResumed:
             return .event(name: "audio_session_resumed", attributes: nil)
         case .volumeChanged(let level):
-            return .event(name: "volume_changed", attributes: ["level": level])
+            return .event(name: "volume_changed", attributes: ["level": AnyEquatable(level)])
         case .qualityChanged(let score):
-            return .event(name: "quality_changed", attributes: ["score": score])
+            return .event(name: "quality_changed", attributes: ["score": AnyEquatable(score)])
         }
     }
 }

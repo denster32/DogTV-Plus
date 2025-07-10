@@ -1,6 +1,7 @@
 // swiftlint:disable import_organization
 import SwiftUI
 import DogTVCore
+import struct DogTVCore.Scene
 import DogTVVision
 // swiftlint:enable import_organization
 

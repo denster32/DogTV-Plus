@@ -84,6 +84,18 @@ public struct Scene: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+extension Scene {
+    public static let example: Scene = try! Scene(
+        name: "Sample Scene",
+        type: .ocean,
+        description: "A sample scene for preview.",
+        duration: 300,
+        isActive: true,
+        metadata: SceneMetadata(author: "Preview", creationDate: Date()),
+        id: UUID()
+    )
+}
+
 // MARK: - Validation Error
 
 /// An enumeration for validation errors.

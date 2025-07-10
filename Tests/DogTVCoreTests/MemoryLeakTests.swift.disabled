@@ -1,6 +1,6 @@
 import XCTest
 import SwiftUI
-@testable import DogTVPlus
+@testable import DogTVCore
 
 class MemoryLeakTests: XCTestCase {
     /// Measures memory usage for content loading to detect leaks or excessive consumption.

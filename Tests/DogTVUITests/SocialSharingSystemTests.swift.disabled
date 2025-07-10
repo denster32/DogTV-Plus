@@ -3,7 +3,7 @@ import Metal
 import Vision
 import XCTest
 
-@testable import DogTV_
+@testable import DogTVUI
 
 /**
  * SocialSharingSystemTests: Comprehensive testing for social sharing capabilities

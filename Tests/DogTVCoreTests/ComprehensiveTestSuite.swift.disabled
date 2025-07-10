@@ -4,7 +4,7 @@ import Foundation
 import CoreData
 import Metal
 import AVFoundation
-@testable import DogTV_
+@testable import DogTVCore
 
 /**
  * Comprehensive Test Suite for DogTV+

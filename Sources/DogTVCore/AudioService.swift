@@ -2,6 +2,21 @@ import Foundation
 import AVFoundation
 import Combine
 
+// Import AudioError from DogTVAudio module
+public enum AudioError: Error, LocalizedError {
+    case playbackFailed(underlyingError: Error)
+    case settingsInvalid(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .playbackFailed(let error):
+            return "Audio playback failed: \(error.localizedDescription)"
+        case .settingsInvalid(let message):
+            return "Invalid audio settings: \(message)"
+        }
+    }
+}
+
 /// A service for managing audio playback, including volume control and audio settings.
 @MainActor
 public class AudioService: ObservableObject {

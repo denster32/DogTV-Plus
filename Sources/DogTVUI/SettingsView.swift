@@ -44,7 +44,7 @@ struct SettingsView: View {
 
                 Section {
                     Button("Reset to Defaults") {
-                        settingsService.resetToDefaults()
+                        settingsService.resetSettings()
                     }
                     .foregroundColor(.red)
                 }

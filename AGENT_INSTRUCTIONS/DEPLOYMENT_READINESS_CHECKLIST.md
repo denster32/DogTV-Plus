@@ -23,7 +23,7 @@
 - [ ] **Voice-over Localization** for accessibility
 - [ ] **Keyboard Input Localization**
 
-#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
+#### **Agent Assignment:** Agent 2 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
 ```swift
 // Required localizations structure:
 Resources/Localizations/
@@ -171,7 +171,7 @@ Resources/Localizations/
 - [ ] **Reviews and Ratings** prompts
 - [ ] **Feedback Collection** system
 
-#### **Agent Assignment:** Agent 8 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
+#### **Agent Assignment:** Agent 2 (Business Lead) + Agent 2 (Core Systems) + Agent 3 (UI)
 
 ---
 

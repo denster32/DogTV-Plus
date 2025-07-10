@@ -3,7 +3,7 @@ import Security
 import CryptoKit
 import XCTest
 
-@testable import DogTV_
+@testable import DogTVData
 
 /**
  * SecureDataStorageSystemTests: Comprehensive testing for secure data storage

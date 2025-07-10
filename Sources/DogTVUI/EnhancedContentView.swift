@@ -1,15 +1,15 @@
 // swiftlint:disable import_organization availability_attributes
 import SwiftUI
 import DogTVCore
+import struct DogTVCore.Scene
 
-typealias AppScene = DogTVCore.Scene
 // swiftlint:enable import_organization
 
 /// Enhanced ContentView with procedural content generation and canine optimization
 @available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
 public struct EnhancedContentView: View {
     @EnvironmentObject var dogTVCore: DogTVCore
-    @State private var selectedScene: AppScene?
+    @State private var selectedScene: Scene?
 
     public init() {}
 
@@ -108,7 +108,7 @@ private struct SceneSelectionView: View {
 
 @available(iOS 17.0, tvOS 17.0, macOS 14.0, *)
 private struct EnhancedSceneCard: View {
-    let scene: AppScene
+    let scene: Scene
     @EnvironmentObject var dogTVCore: DogTVCore
     @State private var isHovered = false
 
@@ -197,7 +197,7 @@ private struct EnhancedSceneCard: View {
 private struct EnhancedSceneCard_Previews: PreviewProvider {
     static var previews: some View {
         EnhancedSceneCard(scene: Scene.example)
-            .environmentObject(DogTVCore())
+            .environmentObject(DogTVCore.shared)
     }
 }
 // swiftlint:enable availability_attributes
