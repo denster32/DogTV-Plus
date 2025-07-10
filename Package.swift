@@ -152,8 +152,7 @@ let package = Package(
                 .linkedFramework("MetalPerformanceShaders"),
                 .linkedFramework("CoreGraphics"),
                 .linkedFramework("CoreImage"),
-                .linkedFramework("QuartzCore"),
-                .linkedFramework("simd")
+                .linkedFramework("QuartzCore")
             ]
         ),
         
@@ -202,7 +201,6 @@ let package = Package(
         .testTarget(
             name: "DogTVUITests",
             dependencies: [
-                "DogTVUI",
                 "DogTVCore",
                 "DogTVVision",
                 .product(name: "Quick", package: "Quick"),
@@ -269,7 +267,6 @@ let package = Package(
             name: "DogTVIntegrationTests",
             dependencies: [
                 "DogTVCore",
-                "DogTVUI",
                 "DogTVAudio",
                 "DogTVVision",
                 "DogTVData",

@@ -59,6 +59,10 @@ class AudioFileLoader {
                 try loadAudioFile(named: "night_wind", withExtension: "mp3"),
                 try loadAudioFile(named: "owl_sounds", withExtension: "mp3")
             ]
+        case .custom:
+            return [
+                try loadAudioFile(named: "custom_ambient", withExtension: "mp3")
+            ]
         }
     }
 }

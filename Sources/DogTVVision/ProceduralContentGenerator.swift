@@ -72,11 +72,11 @@ public class ProceduralContentGenerator: ObservableObject {
         case .rain:
             generateRain()
         case .sunset:
-            // Optionally add a sunset generator if implemented
-            break
+            generateSunset()
         case .stars:
-            // Optionally add a stars generator if implemented
-            break
+            generateStarryNight()
+        case .custom:
+            generateCustomScene()
         }
     }
 
@@ -100,5 +100,20 @@ public class ProceduralContentGenerator: ObservableObject {
     private func generateRain() {
         // Generate rain patterns
         print("Generating rain...")
+    }
+
+    private func generateSunset() {
+        // Generate sunset patterns
+        print("Generating sunset...")
+    }
+
+    private func generateStarryNight() {
+        // Generate starry night patterns
+        print("Generating starry night...")
+    }
+
+    private func generateCustomScene() {
+        // Generate custom scene patterns
+        print("Generating custom scene...")
     }
 }

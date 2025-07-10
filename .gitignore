@@ -1,1 +1,57 @@
+# Build artifacts
 .build/
+*.build/
+DerivedData/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*~
+
+# Analysis files
+build_output.txt
+build_performance_report.md
+build_analysis_report.md
+dependency_analysis.md
+dependency_audit.md
+file_sizes.txt
+file_structure_analysis.md
+imports.txt
+module_design.md
+current_file_sizes.txt
+large_files.txt
+documentation_files.txt
+project_files.txt
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+*.xcuserstate
+*.xcscmblueprint
+*.xcuserdatad/
+*.xcuserdatad1/
+*.xcuserdatad2/
+*.xcuserdatad3/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# IDE
+.vscode/
+.idea/
+*.swiftpm/

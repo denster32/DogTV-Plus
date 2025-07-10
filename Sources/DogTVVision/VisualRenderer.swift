@@ -65,11 +65,11 @@ public class VisualRenderer: ObservableObject {
         case .rain:
             renderRain()
         case .sunset:
-            // Optionally add a sunset renderer if implemented
-            break
+            renderSunset()
         case .stars:
-            // Optionally add a stars renderer if implemented
-            break
+            renderStarryNight()
+        case .custom:
+            renderCustomScene()
         }
     }
 
@@ -89,5 +89,17 @@ public class VisualRenderer: ObservableObject {
 
     private func renderRain() {
         // Rain rendering implementation
+    }
+
+    private func renderSunset() {
+        // Sunset rendering implementation
+    }
+
+    private func renderStarryNight() {
+        // Starry night rendering implementation
+    }
+
+    private func renderCustomScene() {
+        // Custom scene rendering implementation
     }
 }

@@ -336,17 +336,17 @@ enum AudioEvent {
     func toAnalyticsEvent() -> AnalyticsEvent {
         switch self {
         case .sessionStarted(let scene):
-            return .sessionStart(attributes: ["scene": AnyEquatable(scene.rawValue)])
+            return .sessionStart(attributes: [AnyEquatable(scene.rawValue)])
         case .sessionEnded(let duration):
-            return .sessionEnd(attributes: ["duration": AnyEquatable(duration)])
+            return .sessionEnd(attributes: [AnyEquatable(duration)])
         case .sessionPaused:
             return .event(name: "audio_session_paused", attributes: nil)
         case .sessionResumed:
             return .event(name: "audio_session_resumed", attributes: nil)
         case .volumeChanged(let level):
-            return .event(name: "volume_changed", attributes: ["level": AnyEquatable(level)])
+            return .event(name: "volume_changed", attributes: [AnyEquatable(level)])
         case .qualityChanged(let score):
-            return .event(name: "quality_changed", attributes: ["score": AnyEquatable(score)])
+            return .event(name: "quality_changed", attributes: [AnyEquatable(score)])
         }
     }
 }

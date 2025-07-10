@@ -42,8 +42,12 @@ public final class DogTVCore: ObservableObject {
         try await contentService.startScene(scene)
 
         // Start audio if enabled
-        if settingsService.audioSettings.isEnabled, let audioURL = scene.metadata.highQualityAudioURL {
-            audioService.playAudio(from: audioURL)
+        if settingsService.audioSettings.isEnabled {
+            // Create audio URL from metadata audio file name
+            let audioFileName = scene.metadata.audioFile
+            if let audioURL = URL(string: "audio://\(audioFileName)") {
+                audioService.playAudio(from: audioURL)
+            }
         }
 
         // Update session state - use scene ID as session identifier
