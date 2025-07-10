@@ -18,6 +18,8 @@ public final class CoreAnalyticsService: AnalyticsService, ObservableObject, @un
     private var sessionId: String?
     private var userId: String?
 
+    private var sessionStartTime: Date?
+
     private init() {
         startNewSession()
     }
@@ -54,7 +56,15 @@ public final class CoreAnalyticsService: AnalyticsService, ObservableObject, @un
         startNewSession()
     }
 
+    /// Get current session duration in seconds
+    public var currentSessionDuration: TimeInterval {
+        guard let sessionStartTime = sessionStartTime else { return 0 }
+        return Date().timeIntervalSince(sessionStartTime)
+    }
+    
     private func startNewSession() {
         sessionId = UUID().uuidString
+        sessionStartTime = Date()
+        print("🎯 [Analytics] New session started: \(sessionId ?? "unknown")")
     }
 }

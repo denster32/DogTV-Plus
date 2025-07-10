@@ -54,4 +54,11 @@ platform :tvos do
     build_app(scheme: "DogTV+", export_method: "app-store")
     upload_to_app_store
   end
-end 
+
+  desc "Run verification checks"
+  lane :verify do
+    sh "swiftlint --strict"
+    build_app(scheme: "DogTV+")
+    run_tests(scheme: "DogTV+")
+  end
+end
